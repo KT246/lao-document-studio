@@ -160,6 +160,10 @@ function Paper({ children, label }: { children: React.ReactNode; label: string }
   return (
     <section className="paper" aria-label={label}>
       <div className="paper-content">{children}</div>
+      <footer className="paper-footer" aria-label="Powered by TJ Group">
+        <img src="/logo.png" alt="" aria-hidden="true" />
+        <span>Powered by <strong>TJ Group</strong></span>
+      </footer>
     </section>
   );
 }
@@ -206,6 +210,13 @@ function CompanyHeader({ ctx, compact = false }: { ctx: EditorContext; compact?:
         <div><strong>ເລກທີ:</strong> <EditableText ctx={ctx} field="documentNumber" html="...../....." className="line-value" /></div>
         <div><strong>ສະຖານທີ່:</strong> <EditableText ctx={ctx} field="documentPlace" html="ນະຄອນຫຼວງວຽງຈັນ" className="line-value" /></div>
         <div><strong>ວັນທີ:</strong> <EditableText ctx={ctx} field="documentDate" html="20/07/2026" className="line-value" /></div>
+        <EditableText
+          ctx={ctx}
+          field="issuedBy"
+          html="<strong>ອອກໃຫ້ໂດຍ:</strong> TJ Group<br><strong>Issued by:</strong> TJ Group"
+          as="div"
+          className="issued-by-field"
+        />
       </div>
     </section>
   );
