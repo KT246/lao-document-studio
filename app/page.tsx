@@ -8,7 +8,6 @@ type AssetKey = "logo" | "signature" | "stamp";
 type TemplateDefinition = {
   id: TemplateId;
   laoName: string;
-  englishName: string;
   description: string;
   code: string;
   pages: number;
@@ -35,8 +34,7 @@ const TEMPLATES: TemplateDefinition[] = [
   {
     id: "cooperation",
     laoName: "ໃບສະເໜີຂໍຮ່ວມມືທາງທຸລະກິດ",
-    englishName: "Business Cooperation Proposal",
-    description: "ເຊື່ອມຕໍ່ການຊຳລະຜ່ານ Unitel ເບີຂຶ້ນຕົ້ນ 9. / Connect payments through Unitel numbers starting with 9.",
+    description: "ເຊື່ອມຕໍ່ການຊຳລະຜ່ານ Unitel ເບີຂຶ້ນຕົ້ນ 9.",
     code: "COOP",
     pages: 3,
     fileName: "Unitel_Business_Cooperation_Proposal.pdf"
@@ -44,8 +42,7 @@ const TEMPLATES: TemplateDefinition[] = [
   {
     id: "debt-note",
     laoName: "ໃບແຈ້ງໜີ້",
-    englishName: "Debt Note",
-    description: "ແຈ້ງລາຍການໜີ້, ສາເຫດ ແລະ ກຳນົດຊຳລະ. / Record debt details, reason and due date.",
+    description: "ແຈ້ງລາຍການໜີ້, ສາເຫດ ແລະ ກຳນົດຊຳລະ.",
     code: "DEBT",
     pages: 1,
     fileName: "Lao_Debit_Note.pdf"
@@ -53,8 +50,7 @@ const TEMPLATES: TemplateDefinition[] = [
   {
     id: "quotation",
     laoName: "ໃບສະເໜີລາຄາ",
-    englishName: "Quotation",
-    description: "ສະເໜີລາຄາສິນຄ້າ, ບໍລິການ ແລະ ເງື່ອນໄຂ. / Quote products, services and commercial terms.",
+    description: "ສະເໜີລາຄາສິນຄ້າ, ບໍລິການ ແລະ ເງື່ອນໄຂ.",
     code: "QUOTE",
     pages: 1,
     fileName: "Lao_Quotation.pdf"
@@ -148,7 +144,7 @@ function CompanyHeader({ ctx, compact = false }: { ctx: EditorContext; compact?:
     <section className={`company-header keep-together ${compact ? "is-compact" : ""}`}>
       <div className="company-side">
         <div className="document-logo" style={{ width: `${ctx.draft.settings.logoWidth}px` }}>
-          {logo ? <img src={logo} alt="ໂລໂກ້ບໍລິສັດ" /> : <span>LOGO</span>}
+          {logo ? <img src={logo} alt="ໂລໂກ້ບໍລິສັດ" /> : <span>ໂລໂກ</span>}
         </div>
         <div className="company-copy">
           <EditableText ctx={ctx} field="companyName" html="[ຊື່ບໍລິສັດ]" as="div" className="company-name" />
@@ -461,17 +457,17 @@ export default function DocumentStudio() {
         savedAt: new Date().toISOString()
       }));
       if (statusRef.current) {
-        statusRef.current.textContent = `ບັນທຶກແລ້ວ / Saved ${new Date().toLocaleTimeString("lo-LA", { hour: "2-digit", minute: "2-digit" })}`;
+        statusRef.current.textContent = `ບັນທຶກແລ້ວ ${new Date().toLocaleTimeString("lo-LA", { hour: "2-digit", minute: "2-digit" })}`;
       }
-      if (notify) showToast("ບັນທຶກເອກະສານແລ້ວ / Document saved");
+      if (notify) showToast("ບັນທຶກເອກະສານແລ້ວ");
     } catch {
-      if (statusRef.current) statusRef.current.textContent = "ພື້ນທີ່ບັນທຶກເຕັມ / Storage full";
-      showToast("ບໍ່ສາມາດບັນທຶກໄດ້. ກະລຸນາໃຊ້ຮູບທີ່ນ້ອຍກວ່າ. / Unable to save. Please use a smaller image.");
+      if (statusRef.current) statusRef.current.textContent = "ພື້ນທີ່ບັນທຶກເຕັມ";
+      showToast("ບໍ່ສາມາດບັນທຶກໄດ້. ກະລຸນາໃຊ້ຮູບທີ່ນ້ອຍກວ່າ.");
     }
   }, [showToast]);
 
   const scheduleSave = useCallback(() => {
-    if (statusRef.current) statusRef.current.textContent = "ກຳລັງບັນທຶກ... / Saving...";
+    if (statusRef.current) statusRef.current.textContent = "ກຳລັງບັນທຶກ...";
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => writeStorage(selectedId), 650);
   }, [selectedId, writeStorage]);
@@ -560,7 +556,7 @@ export default function DocumentStudio() {
   const formatText = (command: string) => {
     if (!editing) {
       setEditing(true);
-      showToast("ເປີດໂໝດແກ້ໄຂແລ້ວ / Edit mode enabled");
+      showToast("ເປີດໂໝດແກ້ໄຂແລ້ວ");
       return;
     }
     const selection = window.getSelection();
@@ -582,7 +578,7 @@ export default function DocumentStudio() {
     event.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/") || file.size > 6 * 1024 * 1024) {
-      showToast("ຮັບສະເພາະຮູບ PNG/JPG/WebP/SVG ຕ່ຳກວ່າ 6 MB / Use a PNG, JPG, WebP or SVG image under 6 MB");
+      showToast("ຮັບສະເພາະຮູບ PNG/JPG/WebP/SVG ຕ່ຳກວ່າ 6 MB");
       return;
     }
     try {
@@ -590,18 +586,18 @@ export default function DocumentStudio() {
       draftsRef.current[selectedId].assets[pendingAssetRef.current] = dataUrl;
       setRevision((value) => value + 1);
       writeStorage(selectedId);
-      showToast("ອັບເດດຮູບແລ້ວ / Image updated");
+      showToast("ອັບເດດຮູບແລ້ວ");
     } catch {
-      showToast("ບໍ່ສາມາດອ່ານຮູບນີ້ໄດ້ / Unable to read this image");
+      showToast("ບໍ່ສາມາດອ່ານຮູບນີ້ໄດ້");
     }
   };
 
   const resetCurrentTemplate = () => {
-    if (!window.confirm(`ຄືນຄ່າແບບຟອມ “${selectedTemplate.laoName}” ເປັນເນື້ອຫາເລີ່ມຕົ້ນ? / Restore “${selectedTemplate.englishName}” to its original content?`)) return;
+    if (!window.confirm(`ຄືນຄ່າແບບຟອມ “${selectedTemplate.laoName}” ເປັນເນື້ອຫາເລີ່ມຕົ້ນ?`)) return;
     draftsRef.current[selectedId] = createDraft();
     setRevision((value) => value + 1);
     writeStorage(selectedId);
-    showToast("ຄືນຄ່າແບບຟອມແລ້ວ / Template restored");
+    showToast("ຄືນຄ່າແບບຟອມແລ້ວ");
   };
 
   const printDocument = async () => {
@@ -636,9 +632,9 @@ export default function DocumentStudio() {
         .set(pdfOptions as never)
         .from(editorRef.current)
         .save();
-      showToast("ດາວໂຫຼດ PDF ສຳເລັດແລ້ວ / PDF downloaded");
+      showToast("ດາວໂຫຼດ PDF ສຳເລັດແລ້ວ");
     } catch {
-      showToast("ບໍ່ສາມາດສ້າງ PDF, ກຳລັງເປີດໜ້າພິມ / Unable to create PDF; opening print dialog");
+      showToast("ບໍ່ສາມາດສ້າງ PDF, ກຳລັງເປີດໜ້າພິມ");
       window.print();
     } finally {
       document.body.classList.remove("exporting-document");
@@ -662,39 +658,39 @@ export default function DocumentStudio() {
             <span>ລະບົບສ້າງເອກະສານທຸລະກິດ</span>
           </div>
         </div>
-        <div className="header-status"><i /> <span ref={statusRef}>ພ້ອມແກ້ໄຂ / Ready</span></div>
+        <div className="header-status"><i /> <span ref={statusRef}>ພ້ອມແກ້ໄຂ</span></div>
       </header>
 
-      <section className="studio-toolbar" aria-label="ແຖບເຄື່ອງມື / Toolbar">
+      <section className="studio-toolbar" aria-label="ແຖບເຄື່ອງມື">
         <label className="template-select-label">
-          <span>ປະເພດເອກະສານ / Document type</span>
+          <span>ປະເພດເອກະສານ</span>
           <select value={selectedId} onChange={(event) => selectTemplate(event.target.value as TemplateId)}>
             {TEMPLATES.map((template) => (
-              <option key={template.id} value={template.id}>{template.laoName} — {template.englishName}</option>
+              <option key={template.id} value={template.id}>{template.laoName}</option>
             ))}
           </select>
         </label>
 
         <div className="toolbar-divider" />
         <div className="toolbar-group">
-          <button className={editing ? "active" : ""} onClick={() => setEditing(true)}>✎ ແກ້ໄຂ / Edit</button>
-          <button className={!editing ? "active" : ""} onClick={() => setEditing(false)}>◉ ເບິ່ງຕົວຢ່າງ / Preview</button>
+          <button className={editing ? "active" : ""} onClick={() => setEditing(true)}>✎ ແກ້ໄຂ</button>
+          <button className={!editing ? "active" : ""} onClick={() => setEditing(false)}>◉ ເບິ່ງຕົວຢ່າງ</button>
         </div>
         <div className="toolbar-divider" />
         <div className="toolbar-group format-tools">
-          <button aria-label="ຕົວໜາ / Bold" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("bold")}><strong>B</strong></button>
-          <button aria-label="ຕົວອຽງ / Italic" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("italic")}><em>I</em></button>
-          <button aria-label="ຂີດກ້ອງ / Underline" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("underline")}><u>U</u></button>
-          <button aria-label="ຈັດຊ້າຍ / Align left" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("justifyLeft")}>≡</button>
-          <button aria-label="ຈັດກາງ / Align center" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("justifyCenter")}>≣</button>
-          <button aria-label="ຈັດເຕັມ / Justify" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("justifyFull")}>☰</button>
+          <button aria-label="ຕົວໜາ" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("bold")}><strong>B</strong></button>
+          <button aria-label="ຕົວອຽງ" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("italic")}><em>I</em></button>
+          <button aria-label="ຂີດກ້ອງ" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("underline")}><u>U</u></button>
+          <button aria-label="ຈັດຊ້າຍ" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("justifyLeft")}>≡</button>
+          <button aria-label="ຈັດກາງ" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("justifyCenter")}>≣</button>
+          <button aria-label="ຈັດເຕັມ" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("justifyFull")}>☰</button>
         </div>
         <div className="toolbar-divider" />
         <div className="toolbar-group">
-          <button onClick={() => chooseAsset("logo")}>▧ ໂລໂກ / Logo</button>
-          <button onClick={() => chooseAsset("signature")}>⌁ ລາຍເຊັນ / Signature</button>
-          <button onClick={() => chooseAsset("stamp")}>◎ ກາປະທັບ / Stamp</button>
-          <label className="logo-size-control">ຂະໜາດໂລໂກ / Logo size <input type="range" min="56" max="150" value={draft.settings.logoWidth} onChange={(event) => {
+          <button onClick={() => chooseAsset("logo")}>▧ ໂລໂກ</button>
+          <button onClick={() => chooseAsset("signature")}>⌁ ລາຍເຊັນ</button>
+          <button onClick={() => chooseAsset("stamp")}>◎ ກາປະທັບ</button>
+          <label className="logo-size-control">ຂະໜາດໂລໂກ <input type="range" min="56" max="150" value={draft.settings.logoWidth} onChange={(event) => {
             draftsRef.current[selectedId].settings.logoWidth = Number(event.target.value);
             setRevision((value) => value + 1);
             scheduleSave();
@@ -702,18 +698,18 @@ export default function DocumentStudio() {
         </div>
         <div className="toolbar-divider" />
         <div className="toolbar-group toolbar-actions">
-          <button onClick={() => writeStorage(selectedId, true)}>▣ ບັນທຶກ / Save</button>
-          <button className="primary" disabled={exporting} onClick={exportPdf}>{exporting ? "⋯ ກຳລັງສ້າງ / Creating" : "↓ ດາວໂຫຼດ PDF / Download PDF"}</button>
-          <button onClick={printDocument}>▤ ພິມ / Print</button>
-          <button className="danger" onClick={resetCurrentTemplate}>↺ ຄືນຄ່າ / Reset</button>
+          <button onClick={() => writeStorage(selectedId, true)}>▣ ບັນທຶກ</button>
+          <button className="primary" disabled={exporting} onClick={exportPdf}>{exporting ? "⋯ ກຳລັງສ້າງ" : "↓ ດາວໂຫຼດ PDF"}</button>
+          <button onClick={printDocument}>▤ ພິມ</button>
+          <button className="danger" onClick={resetCurrentTemplate}>↺ ຄືນຄ່າ</button>
         </div>
       </section>
 
       <div className="studio-body">
-        <aside className="template-catalog" aria-label="ລາຍການແບບຟອມ / Template catalog">
+        <aside className="template-catalog" aria-label="ລາຍການແບບຟອມ">
           <div className="catalog-heading">
-            <span>ແບບຟອມ / Templates</span>
-            <b>{TEMPLATES.length} ແບບ / templates</b>
+            <span>ລາຍການແບບຟອມ</span>
+            <b>{TEMPLATES.length} ແບບ</b>
           </div>
           <div className="template-list">
             {TEMPLATES.map((template) => (
@@ -725,25 +721,24 @@ export default function DocumentStudio() {
               >
                 <span className="template-code">{template.code}</span>
                 <strong>{template.laoName}</strong>
-                <span>{template.englishName}</span>
                 <small>{template.description}</small>
-                <i>{template.pages} ໜ້າ A4 / A4 {template.pages === 1 ? "page" : "pages"}</i>
+                <i>{template.pages} ໜ້າ A4</i>
               </button>
             ))}
           </div>
           <div className="catalog-tip">
-            <strong>ແບບຟອມແຍກກັນ / Independent templates</strong>
-            <p>ແຕ່ລະແບບຟອມຖືກບັນທຶກແຍກກັນ. ການປ່ຽນແບບຟອມຈະບໍ່ເຮັດໃຫ້ເນື້ອຫາສູນເສຍ. / Each template is saved separately, so switching templates keeps your work.</p>
+            <strong>ແບບຟອມແຍກກັນ</strong>
+            <p>ແຕ່ລະແບບຟອມຖືກບັນທຶກແຍກກັນ. ການປ່ຽນແບບຟອມຈະບໍ່ເຮັດໃຫ້ເນື້ອຫາສູນເສຍ.</p>
           </div>
         </aside>
 
         <section className="document-workspace">
           <div className="workspace-heading">
             <div>
-              <span>ກຳລັງແກ້ໄຂ / Editing</span>
+              <span>ກຳລັງແກ້ໄຂ</span>
               <strong>{selectedTemplate.laoName}</strong>
             </div>
-            <span>{selectedTemplate.pages} ໜ້າ / {selectedTemplate.pages === 1 ? "page" : "pages"} · A4 portrait · Noto Sans Lao</span>
+            <span>{selectedTemplate.pages} ໜ້າ · A4 ແນວຕັ້ງ · Noto Sans Lao</span>
           </div>
           <div className={`document-pages ${editing ? "editing" : "previewing"}`} ref={editorRef} key={`${selectedId}-${revision}`}>
             <TemplateCanvas templateId={selectedId} ctx={editorContext} />
