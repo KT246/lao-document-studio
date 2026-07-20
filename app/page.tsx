@@ -144,7 +144,7 @@ function CompanyHeader({ ctx, compact = false }: { ctx: EditorContext; compact?:
     <section className={`company-header keep-together ${compact ? "is-compact" : ""}`}>
       <div className="company-side">
         <div className="document-logo" style={{ width: `${ctx.draft.settings.logoWidth}px` }}>
-          {logo ? <img src={logo} alt="ໂລໂກ້ບໍລິສັດ" /> : <span>ໂລໂກ</span>}
+          {logo ? <img src={logo} alt="Logo ບໍລິສັດ" /> : <span>Logo</span>}
         </div>
         <div className="company-copy">
           <EditableText ctx={ctx} field="companyName" html="[ຊື່ບໍລິສັດ]" as="div" className="company-name" />
@@ -652,10 +652,12 @@ export default function DocumentStudio() {
     <main className="studio-shell" data-revision={revision}>
       <header className="studio-header">
         <div className="brand-block">
-          <div className="brand-mark">ລ</div>
+          <div className="brand-mark">
+            <img src="/logo.png" alt="Lao Document Studio Logo" />
+          </div>
           <div>
             <strong>Lao Document Studio</strong>
-            <span>ລະບົບສ້າງເອກະສານທຸລະກິດ</span>
+            <span>ເຄື່ອງມືສ້າງ ແກ້ໄຂ ແລະ ຈັດການເອກະສານພາສາລາວ</span>
           </div>
         </div>
         <div className="header-status"><i /> <span ref={statusRef}>ພ້ອມແກ້ໄຂ</span></div>
@@ -687,10 +689,10 @@ export default function DocumentStudio() {
         </div>
         <div className="toolbar-divider" />
         <div className="toolbar-group">
-          <button onClick={() => chooseAsset("logo")}>▧ ໂລໂກ</button>
+          <button onClick={() => chooseAsset("logo")}>▧ Logo</button>
           <button onClick={() => chooseAsset("signature")}>⌁ ລາຍເຊັນ</button>
           <button onClick={() => chooseAsset("stamp")}>◎ ກາປະທັບ</button>
-          <label className="logo-size-control">ຂະໜາດໂລໂກ <input type="range" min="56" max="150" value={draft.settings.logoWidth} onChange={(event) => {
+          <label className="logo-size-control">ຂະໜາດ Logo <input type="range" min="56" max="150" value={draft.settings.logoWidth} onChange={(event) => {
             draftsRef.current[selectedId].settings.logoWidth = Number(event.target.value);
             setRevision((value) => value + 1);
             scheduleSave();

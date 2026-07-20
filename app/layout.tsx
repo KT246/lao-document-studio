@@ -11,10 +11,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(baseUrl),
     title: "Lao Document Studio",
-    description: "ສ້າງ, ແກ້ໄຂ, ບັນທຶກ ແລະ ສົ່ງອອກເອກະສານທຸລະກິດພາສາລາວ.",
+    description: "ເຄື່ອງມືສ້າງ, ແກ້ໄຂ, ບັນທຶກ ແລະ ຈັດການເອກະສານພາສາລາວທຸກປະເພດ.",
+    icons: {
+      icon: [{ url: "/logo.png", type: "image/png" }],
+      apple: "/logo.png"
+    },
     openGraph: {
       title: "Lao Document Studio",
-      description: "ເລືອກແບບຟອມ, ແກ້ໄຂໂດຍກົງ ແລະ ສົ່ງອອກ PDF.",
+      description: "ສ້າງ, ແກ້ໄຂ ແລະ ຈັດການເອກະສານພາສາລາວທຸກປະເພດ.",
       type: "website",
       url: baseUrl,
       images: [{ url: `${baseUrl}/og.png`, width: 1200, height: 630, alt: "Lao Document Studio" }]
@@ -22,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
     twitter: {
       card: "summary_large_image",
       title: "Lao Document Studio",
-      description: "ເລືອກແບບຟອມ, ແກ້ໄຂໂດຍກົງ ແລະ ສົ່ງອອກ PDF.",
+      description: "ສ້າງ, ແກ້ໄຂ ແລະ ຈັດການເອກະສານພາສາລາວທຸກປະເພດ.",
       images: [`${baseUrl}/og.png`]
     }
   };
