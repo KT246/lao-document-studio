@@ -629,6 +629,155 @@ function readFile(file: File): Promise<string> {
   });
 }
 
+type PreparedOverlayAsset = {
+  dataUrl: string;
+  status: "already-transparent" | "background-removed" | "original-preserved";
+};
+
+function loadImage(dataUrl: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Unable to decode image"));
+    image.src = dataUrl;
+  });
+}
+
+function median(values: number[]) {
+  const sorted = [...values].sort((left, right) => left - right);
+  return sorted[Math.floor(sorted.length / 2)] ?? 0;
+}
+
+function colorDistance(red: number, green: number, blue: number, background: [number, number, number]) {
+  const redDistance = red - background[0];
+  const greenDistance = green - background[1];
+  const blueDistance = blue - background[2];
+  return Math.sqrt((0.3 * redDistance ** 2) + (0.59 * greenDistance ** 2) + (0.11 * blueDistance ** 2));
+}
+
+async function prepareOverlayAsset(dataUrl: string): Promise<PreparedOverlayAsset> {
+  try {
+    const image = await loadImage(dataUrl);
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    if (!sourceWidth || !sourceHeight) return { dataUrl, status: "original-preserved" };
+
+    const maxDimension = 1200;
+    const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+    const width = Math.max(1, Math.round(sourceWidth * scale));
+    const height = Math.max(1, Math.round(sourceHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return { dataUrl, status: "original-preserved" };
+    context.drawImage(image, 0, 0, width, height);
+
+    const imageData = context.getImageData(0, 0, width, height);
+    const pixels = imageData.data;
+    const pixelCount = width * height;
+    let transparentPixels = 0;
+    for (let index = 3; index < pixels.length; index += 4) {
+      if (pixels[index] < 245) transparentPixels += 1;
+    }
+
+    if (transparentPixels / pixelCount >= 0.002) {
+      return { dataUrl, status: "already-transparent" };
+    }
+
+    const edgeDepth = Math.max(1, Math.round(Math.min(width, height) * 0.015));
+    const stride = Math.max(1, Math.floor(Math.max(width, height) / 320));
+    const edgeRed: number[] = [];
+    const edgeGreen: number[] = [];
+    const edgeBlue: number[] = [];
+    const addPixel = (x: number, y: number) => {
+      const index = ((y * width) + x) * 4;
+      if (pixels[index + 3] < 245) return;
+      edgeRed.push(pixels[index]);
+      edgeGreen.push(pixels[index + 1]);
+      edgeBlue.push(pixels[index + 2]);
+    };
+
+    for (let y = 0; y < edgeDepth; y += stride) {
+      for (let x = 0; x < width; x += stride) {
+        addPixel(x, y);
+        addPixel(x, height - 1 - y);
+      }
+    }
+    for (let x = 0; x < edgeDepth; x += stride) {
+      for (let y = edgeDepth; y < height - edgeDepth; y += stride) {
+        addPixel(x, y);
+        addPixel(width - 1 - x, y);
+      }
+    }
+
+    if (edgeRed.length < 12) return { dataUrl, status: "original-preserved" };
+    const background: [number, number, number] = [median(edgeRed), median(edgeGreen), median(edgeBlue)];
+    const edgeDistances = edgeRed.map((red, index) => colorDistance(red, edgeGreen[index], edgeBlue[index], background));
+    const uniformEdgeRatio = edgeDistances.filter((distance) => distance <= 32).length / edgeDistances.length;
+    if (uniformEdgeRatio < 0.72) return { dataUrl, status: "original-preserved" };
+
+    const sortedEdgeDistances = [...edgeDistances].sort((left, right) => left - right);
+    const edgeNoise = sortedEdgeDistances[Math.floor(sortedEdgeDistances.length * 0.85)] ?? 0;
+    const clearThreshold = Math.min(38, Math.max(12, edgeNoise + 5));
+    const featherThreshold = clearThreshold + 48;
+    let removedPixels = 0;
+    let remainingPixels = 0;
+
+    for (let index = 0; index < pixels.length; index += 4) {
+      const originalAlpha = pixels[index + 3];
+      const distance = colorDistance(pixels[index], pixels[index + 1], pixels[index + 2], background);
+      if (distance <= clearThreshold) {
+        pixels[index + 3] = 0;
+        removedPixels += 1;
+      } else if (distance < featherThreshold) {
+        const feather = (distance - clearThreshold) / (featherThreshold - clearThreshold);
+        pixels[index + 3] = Math.round(originalAlpha * feather);
+        removedPixels += 1;
+      }
+      if (pixels[index + 3] > 16) remainingPixels += 1;
+    }
+
+    const remainingRatio = remainingPixels / pixelCount;
+    const removedRatio = removedPixels / pixelCount;
+    if (remainingRatio < 0.0015 || remainingRatio > 0.72 || removedRatio < 0.05) {
+      return { dataUrl, status: "original-preserved" };
+    }
+
+    context.putImageData(imageData, 0, 0);
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        if (pixels[((y * width) + x) * 4 + 3] <= 16) continue;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+
+    if (maxX < minX || maxY < minY) return { dataUrl, status: "original-preserved" };
+    const padding = Math.max(4, Math.round(Math.max(width, height) * 0.025));
+    const cropX = Math.max(0, minX - padding);
+    const cropY = Math.max(0, minY - padding);
+    const cropRight = Math.min(width, maxX + padding + 1);
+    const cropBottom = Math.min(height, maxY + padding + 1);
+    const output = document.createElement("canvas");
+    output.width = cropRight - cropX;
+    output.height = cropBottom - cropY;
+    const outputContext = output.getContext("2d");
+    if (!outputContext) return { dataUrl, status: "original-preserved" };
+    outputContext.drawImage(canvas, cropX, cropY, output.width, output.height, 0, 0, output.width, output.height);
+
+    return { dataUrl: output.toDataURL("image/png"), status: "background-removed" };
+  } catch {
+    return { dataUrl, status: "original-preserved" };
+  }
+}
+
 async function waitForDocumentAssets(root: HTMLElement) {
   if (document.fonts?.ready) await document.fonts.ready;
   const images = Array.from(root.querySelectorAll("img"));
@@ -905,6 +1054,7 @@ export default function DocumentStudio() {
 
   const uploadAsset = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    const asset = pendingAssetRef.current;
     event.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/") || file.size > 6 * 1024 * 1024) {
@@ -913,10 +1063,21 @@ export default function DocumentStudio() {
     }
     try {
       const dataUrl = await readFile(file);
-      draftsRef.current[selectedId].assets[pendingAssetRef.current] = dataUrl;
+      const prepared = asset === "signature" || asset === "stamp"
+        ? await prepareOverlayAsset(dataUrl)
+        : { dataUrl, status: "original-preserved" as const };
+      draftsRef.current[selectedId].assets[asset] = prepared.dataUrl;
       setRevision((value) => value + 1);
       writeStorage(selectedId);
-      showToast("ອັບເດດຮູບແລ້ວ");
+      if (asset === "logo") {
+        showToast("ອັບເດດຮູບແລ້ວ");
+      } else if (prepared.status === "already-transparent") {
+        showToast("ຮູບມີພື້ນໂປ່ງໃສແລ້ວ — ຮັກສາຮູບເດີມ");
+      } else if (prepared.status === "background-removed") {
+        showToast("ລຶບພື້ນຫຼັງ ແລະ ອັບເດດຮູບແລ້ວ");
+      } else {
+        showToast("ບໍ່ພົບພື້ນຫຼັງທີ່ລຶບໄດ້ຢ່າງປອດໄພ — ຮັກສາຮູບເດີມ");
+      }
     } catch {
       showToast("ບໍ່ສາມາດອ່ານຮູບນີ້ໄດ້");
     }
