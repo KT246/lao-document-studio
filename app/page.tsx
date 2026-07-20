@@ -534,6 +534,9 @@ export default function DocumentStudio() {
     || categoryFilter !== "all"
     || pageFilter !== "all"
     || statusFilter !== "all";
+  const templateOptions = filtersActive
+    ? (filteredTemplates.length > 0 ? filteredTemplates : [selectedTemplate])
+    : TEMPLATES;
 
   const showToast = useCallback((message: string) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -667,12 +670,19 @@ export default function DocumentStudio() {
     };
   }, [downloadConfirmationOpen]);
 
-  const selectTemplate = (nextId: TemplateId) => {
+  const selectTemplate = useCallback((nextId: TemplateId) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     writeStorage(nextId);
     setSelectedId(nextId);
     setRevision((value) => value + 1);
-  };
+  }, [writeStorage]);
+
+  useEffect(() => {
+    if (filteredTemplates.length === 0) return;
+    if (!filteredTemplates.some((template) => template.id === selectedId)) {
+      selectTemplate(filteredTemplates[0].id);
+    }
+  }, [filteredTemplates, selectTemplate, selectedId]);
 
   const updateLaoFont = (fontId: LaoFontId) => {
     draftsRef.current[selectedId].settings.laoFont = fontId;
@@ -809,8 +819,12 @@ export default function DocumentStudio() {
       <section className="studio-toolbar" aria-label="ແຖບເຄື່ອງມື">
         <label className="template-select-label">
           <span>ເອກະສານທີ່ເລືອກ</span>
-          <select value={selectedId} onChange={(event) => selectTemplate(event.target.value as TemplateId)}>
-            {TEMPLATES.map((template) => (
+          <select
+            value={selectedId}
+            disabled={filtersActive && filteredTemplates.length === 0}
+            onChange={(event) => selectTemplate(event.target.value as TemplateId)}
+          >
+            {templateOptions.map((template) => (
               <option key={template.id} value={template.id}>{template.laoName}</option>
             ))}
           </select>
@@ -898,32 +912,10 @@ export default function DocumentStudio() {
               </label>
               <button type="button" className="clear-filters" disabled={!filtersActive} onClick={clearFilters}>↺ ລ້າງຕົວກອງ</button>
             </div>
-          </section>
-
-          <div className="template-list">
-            {filteredTemplates.map((template) => (
-              <button
-                key={template.id}
-                className={`template-card ${template.id === selectedId ? "selected" : ""}`}
-                onClick={() => selectTemplate(template.id)}
-                aria-pressed={template.id === selectedId}
-              >
-                <span className="template-code">{template.code}</span>
-                <strong>{template.laoName}</strong>
-                <small>{template.description}</small>
-                <div className="template-badges">
-                  <span>{TEMPLATE_CATEGORIES.find((category) => category.id === template.category)?.label}</span>
-                  <span className={hasDraftChanges(draftsRef.current[template.id]) ? "is-edited" : ""}>
-                    {hasDraftChanges(draftsRef.current[template.id]) ? "ແກ້ໄຂແລ້ວ" : "ຍັງບໍ່ແກ້ໄຂ"}
-                  </span>
-                </div>
-                <i>{template.pages} ໜ້າ A4</i>
-              </button>
-            ))}
-            {filteredTemplates.length === 0 ? (
-              <div className="empty-catalog">ບໍ່ພົບແບບຟອມທີ່ກົງກັບຕົວກອງ</div>
+            {filtersActive && filteredTemplates.length === 0 ? (
+              <p className="filter-empty" role="status">ບໍ່ພົບເອກະສານທີ່ກົງກັບຕົວກອງ</p>
             ) : null}
-          </div>
+          </section>
 
           <section className="font-settings" aria-label="Font ເອກະສານ">
             <div className="font-settings-heading">

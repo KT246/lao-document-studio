@@ -354,114 +354,16 @@ input:focus-visible,
   opacity: 0.45;
 }
 
-.template-list {
-  display: grid;
-  gap: 8px;
-}
-
-.empty-catalog {
-  padding: 18px 11px;
+.filter-empty {
+  margin: 10px 0 0;
+  padding: 10px;
   border: 1px dashed #c9d3dc;
-  border-radius: 8px;
+  border-radius: 7px;
   color: #71808e;
-  background: #fff;
-  font-size: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 9.5px;
   line-height: 1.55;
   text-align: center;
-}
-
-.template-card {
-  position: relative;
-  display: grid;
-  width: 100%;
-  gap: 2px;
-  padding: 12px 12px 11px 45px;
-  border: 1px solid #d9dfe6;
-  border-radius: 9px;
-  color: var(--ink);
-  background: #fff;
-  cursor: pointer;
-  text-align: left;
-}
-
-.template-card:hover {
-  border-color: #9babb9;
-}
-
-.template-card.selected {
-  border-color: #6f92af;
-  background: #edf4f8;
-  box-shadow: inset 3px 0 0 var(--navy);
-}
-
-.template-code {
-  position: absolute;
-  top: 12px;
-  left: 10px;
-  display: grid !important;
-  width: 27px;
-  height: 27px;
-  place-items: center;
-  border-radius: 6px;
-  color: #fff !important;
-  background: #496984;
-  font-family: Arial, sans-serif;
-  font-size: 7px !important;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-}
-
-.template-card strong {
-  overflow: hidden;
-  font-size: 12px;
-  line-height: 1.45;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.template-card > span:not(.template-code) {
-  color: #526170;
-  font-size: 10px;
-}
-
-.template-card small {
-  display: -webkit-box;
-  margin-top: 5px;
-  overflow: hidden;
-  color: #73808c;
-  font-size: 9.5px;
-  line-height: 1.45;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.template-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.template-badges span {
-  padding: 2px 5px;
-  border-radius: 999px;
-  color: #586978;
-  background: #edf1f4;
-  font-size: 7.5px;
-  line-height: 1.4;
-}
-
-.template-badges span.is-edited {
-  color: #27624c;
-  background: #e4f2ec;
-}
-
-.template-card i {
-  margin-top: 5px;
-  color: #496983;
-  font-size: 8.5px;
-  font-style: normal;
-  font-weight: 600;
 }
 
 .catalog-tip {
@@ -1258,17 +1160,6 @@ input:focus-visible,
 
   .catalog-tip {
     display: none;
-  }
-
-  .template-list {
-    display: flex;
-    gap: 7px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-  }
-
-  .template-card {
-    min-width: 210px;
   }
 
   .document-workspace {
