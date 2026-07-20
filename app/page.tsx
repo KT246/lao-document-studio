@@ -124,7 +124,6 @@ type EditableTextProps = {
   as?: React.ElementType;
   className?: string;
   placeholder?: string;
-  locked?: boolean;
 };
 
 function EditableText({
@@ -133,16 +132,14 @@ function EditableText({
   html,
   as: Tag = "span",
   className = "",
-  placeholder = "",
-  locked = false
+  placeholder = "ພິມເນື້ອຫາ..."
 }: EditableTextProps) {
   const value = ctx.draft.fields[field] ?? html;
-  const editable = ctx.editing && !locked;
 
   return (
     <Tag
       className={`editable ${className}`.trim()}
-      contentEditable={editable}
+      contentEditable={ctx.editing}
       data-field={field}
       data-placeholder={placeholder}
       suppressContentEditableWarning
@@ -160,10 +157,6 @@ function Paper({ children, label }: { children: React.ReactNode; label: string }
   return (
     <section className="paper" aria-label={label}>
       <div className="paper-content">{children}</div>
-      <footer className="paper-footer" aria-label="Powered by TJ Group">
-        <img src="/logo.png" alt="" aria-hidden="true" />
-        <span>Powered by <strong>TJ Group</strong></span>
-      </footer>
     </section>
   );
 }
@@ -185,7 +178,13 @@ function NationalHeader({ ctx }: { ctx: EditorContext }) {
         as="div"
         className="national-motto"
       />
-      <div className="national-divider">──────────── ວ ວ ────────────</div>
+      <EditableText
+        ctx={ctx}
+        field="nationalDivider"
+        html="──────────── ວ ວ ────────────"
+        as="div"
+        className="national-divider"
+      />
     </header>
   );
 }
@@ -200,16 +199,16 @@ function CompanyHeader({ ctx, compact = false }: { ctx: EditorContext; compact?:
         </div>
         <div className="company-copy">
           <EditableText ctx={ctx} field="companyName" html="[ຊື່ບໍລິສັດ]" as="div" className="company-name" />
-          <div><strong>ທີ່ຢູ່:</strong> <EditableText ctx={ctx} field="companyAddress" html="[ທີ່ຢູ່ບໍລິສັດ]" /></div>
-          <div><strong>ໂທ:</strong> <EditableText ctx={ctx} field="companyPhone" html="020 ............" /></div>
-          <div><strong>ອີເມວ:</strong> <EditableText ctx={ctx} field="companyEmail" html="email@company.com" /></div>
-          <div><strong>ເລກອາກອນ:</strong> <EditableText ctx={ctx} field="companyTax" html="................" /></div>
+          <div><EditableText ctx={ctx} field="companyAddressLabel" html="<strong>ທີ່ຢູ່:</strong>" /> <EditableText ctx={ctx} field="companyAddress" html="[ທີ່ຢູ່ບໍລິສັດ]" /></div>
+          <div><EditableText ctx={ctx} field="companyPhoneLabel" html="<strong>ໂທ:</strong>" /> <EditableText ctx={ctx} field="companyPhone" html="020 ............" /></div>
+          <div><EditableText ctx={ctx} field="companyEmailLabel" html="<strong>ອີເມວ:</strong>" /> <EditableText ctx={ctx} field="companyEmail" html="email@company.com" /></div>
+          <div><EditableText ctx={ctx} field="companyTaxLabel" html="<strong>ເລກອາກອນ:</strong>" /> <EditableText ctx={ctx} field="companyTax" html="................" /></div>
         </div>
       </div>
       <div className="document-meta">
-        <div><strong>ເລກທີ:</strong> <EditableText ctx={ctx} field="documentNumber" html="...../....." className="line-value" /></div>
-        <div><strong>ສະຖານທີ່:</strong> <EditableText ctx={ctx} field="documentPlace" html="ນະຄອນຫຼວງວຽງຈັນ" className="line-value" /></div>
-        <div><strong>ວັນທີ:</strong> <EditableText ctx={ctx} field="documentDate" html="20/07/2026" className="line-value" /></div>
+        <div><EditableText ctx={ctx} field="documentNumberLabel" html="<strong>ເລກທີ:</strong>" /> <EditableText ctx={ctx} field="documentNumber" html="...../....." className="line-value" /></div>
+        <div><EditableText ctx={ctx} field="documentPlaceLabel" html="<strong>ສະຖານທີ່:</strong>" /> <EditableText ctx={ctx} field="documentPlace" html="ນະຄອນຫຼວງວຽງຈັນ" className="line-value" /></div>
+        <div><EditableText ctx={ctx} field="documentDateLabel" html="<strong>ວັນທີ:</strong>" /> <EditableText ctx={ctx} field="documentDate" html="20/07/2026" className="line-value" /></div>
         <EditableText
           ctx={ctx}
           field="issuedBy"
@@ -296,18 +295,19 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
         />
         <EditableText ctx={ctx} field="revenueHeading" html="3. ຂໍ້ສະເໜີອັດຕາແບ່ງປັນລາຍຮັບ" as="h2" className="section-heading" />
         <div className="form-grid keep-together">
-          <div><span>ອັດຕາທີ່ສະເໜີໃຫ້ Unitel</span><span className="form-value"><EditableText ctx={ctx} field="unitelRate" html="25" />%</span></div>
-          <div><span>ອັດຕາທີ່ບໍລິສັດໄດ້ຮັບ</span><span className="form-value computed"><EditableText ctx={ctx} field="companyRate" html="75" locked />%</span></div>
-          <div><span>ຍອດທຸລະກຳຄາດຄະເນຕໍ່ມື້</span><EditableText ctx={ctx} field="dailySales" html="........ LAK" className="form-value" /></div>
-          <div><span>ຍອດທຸລະກຳຄາດຄະເນຕໍ່ເດືອນ</span><EditableText ctx={ctx} field="monthlySales" html="........ LAK" className="form-value" /></div>
-          <div><span>ຮອບການຊຳລະຍອດທີ່ຕ້ອງການ</span><EditableText ctx={ctx} field="settlement" html="T+1" className="form-value" /></div>
-          <div><span>ບັນທຶກການເຈລະຈາ</span><EditableText ctx={ctx} field="negotiationNote" html="................................" className="form-value" /></div>
+          <div><EditableText ctx={ctx} field="unitelRateLabel" html="ອັດຕາທີ່ສະເໜີໃຫ້ Unitel" /><span className="form-value"><EditableText ctx={ctx} field="unitelRate" html="25" /><EditableText ctx={ctx} field="unitelRateUnit" html="%" /></span></div>
+          <div><EditableText ctx={ctx} field="companyRateLabel" html="ອັດຕາທີ່ບໍລິສັດໄດ້ຮັບ" /><span className="form-value"><EditableText ctx={ctx} field="companyRate" html="75" /><EditableText ctx={ctx} field="companyRateUnit" html="%" /></span></div>
+          <div><EditableText ctx={ctx} field="dailySalesLabel" html="ຍອດທຸລະກຳຄາດຄະເນຕໍ່ມື້" /><EditableText ctx={ctx} field="dailySales" html="........ LAK" className="form-value" /></div>
+          <div><EditableText ctx={ctx} field="monthlySalesLabel" html="ຍອດທຸລະກຳຄາດຄະເນຕໍ່ເດືອນ" /><EditableText ctx={ctx} field="monthlySales" html="........ LAK" className="form-value" /></div>
+          <div><EditableText ctx={ctx} field="settlementLabel" html="ຮອບການຊຳລະຍອດທີ່ຕ້ອງການ" /><EditableText ctx={ctx} field="settlement" html="T+1" className="form-value" /></div>
+          <div><EditableText ctx={ctx} field="negotiationNoteLabel" html="ບັນທຶກການເຈລະຈາ" /><EditableText ctx={ctx} field="negotiationNote" html="................................" className="form-value" /></div>
         </div>
-        <p>
-          ທາງບໍລິສັດຂໍສະເໜີອັດຕາແບ່ງປັນລາຍຮັບໃຫ້ທາງ Unitel ໃນອັດຕາ [
-          <EditableText ctx={ctx} field="unitelRateNarrative" html="25" locked />]% ຂອງມູນຄ່າທຸລະກຳທີ່ສຳເລັດ ແລະ ບໍລິສັດໄດ້ຮັບຍອດສຸດທິ [
-          <EditableText ctx={ctx} field="companyRateNarrative" html="75" locked />]%.
-        </p>
+        <EditableText
+          ctx={ctx}
+          field="revenueNarrative"
+          html="ທາງບໍລິສັດຂໍສະເໜີອັດຕາແບ່ງປັນລາຍຮັບໃຫ້ທາງ Unitel ໃນອັດຕາ [25]% ຂອງມູນຄ່າທຸລະກຳທີ່ສຳເລັດ ແລະ ບໍລິສັດໄດ້ຮັບຍອດສຸດທິ [75]%."
+          as="p"
+        />
         <EditableText
           ctx={ctx}
           field="revenueNegotiable"
@@ -315,7 +315,7 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
           as="p"
         />
         <EditableText ctx={ctx} field="unitelInfoHeading" html="4. ຂໍ້ມູນທີ່ຂໍໃຫ້ Unitel ສະໜອງ" as="h2" className="section-heading" />
-        <ol className="numbered-list">
+        <div className="numbered-list">
           {[
             "ເງື່ອນໄຂການເຊື່ອມຕໍ່ API;",
             "API Document ແລະ ລະບົບ Sandbox;",
@@ -326,9 +326,12 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
             "ເອກະສານ ແລະ ໃບອະນຸຍາດທີ່ຕ້ອງຈັດຫາເພີ່ມເຕີມ;",
             "ການຢືນຢັນວ່າອັດຕາສ່ວນແບ່ງລວມຄ່າ API, OTP, SMS, ພາສີ ແລະ ຄ່າບໍລິການອື່ນແລ້ວຫຼືບໍ່."
           ].map((item, index) => (
-            <li key={index}><EditableText ctx={ctx} field={`unitelInfo${index + 1}`} html={item} /></li>
+            <div className="numbered-list-item" key={index}>
+              <EditableText ctx={ctx} field={`unitelInfoNumber${index + 1}`} html={`${index + 1}.`} className="list-number" />
+              <EditableText ctx={ctx} field={`unitelInfo${index + 1}`} html={item} />
+            </div>
           ))}
-        </ol>
+        </div>
       </Paper>
 
       <Paper label="ໜ້າ 3 — ລາຍເຊັນ ແລະ ເອກະສານຄັດຕິດ">
@@ -337,7 +340,7 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
         <EditableText ctx={ctx} field="conclusion2" html="ຮຽນມາດ້ວຍຄວາມເຄົາລົບຢ່າງສູງ." as="p" />
         <SignatureBlock ctx={ctx} />
         <EditableText ctx={ctx} field="attachmentsHeading" html="ເອກະສານຄັດຕິດ:" as="h2" className="section-heading" />
-        <ol className="numbered-list attachments-list">
+        <div className="numbered-list attachments-list">
           {[
             "ສຳເນົາໃບທະບຽນວິສາຫະກິດ;",
             "ສຳເນົາໃບອະນຸຍາດດຳເນີນທຸລະກິດ (ຖ້າມີ);",
@@ -347,9 +350,12 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
             "ຮູບພາບ ແລະ Link ຂອງເວັບໄຊ;",
             "ແຜນວາດຂັ້ນຕອນການຊຳລະເງິນ."
           ].map((item, index) => (
-            <li key={index}><EditableText ctx={ctx} field={`attachment${index + 1}`} html={item} /></li>
+            <div className="numbered-list-item" key={index}>
+              <EditableText ctx={ctx} field={`attachmentNumber${index + 1}`} html={`${index + 1}.`} className="list-number" />
+              <EditableText ctx={ctx} field={`attachment${index + 1}`} html={item} />
+            </div>
           ))}
-        </ol>
+        </div>
       </Paper>
     </>
   );
@@ -363,42 +369,42 @@ function DebtNoteTemplate({ ctx }: { ctx: EditorContext }) {
       <DocumentTitle ctx={ctx} title="ໃບແຈ້ງໜີ້" subtitle="DEBIT NOTE" />
       <div className="two-column-details keep-together">
         <div>
-          <h2>ຜູ້ຮັບແຈ້ງ / Bên nhận</h2>
+          <EditableText ctx={ctx} field="debtorHeading" html="ຜູ້ຮັບແຈ້ງ / Bên nhận" as="h2" />
           <EditableText ctx={ctx} field="debtorName" html="[ຊື່ລູກຄ້າ / Tên khách hàng]" as="div" className="detail-strong" />
           <EditableText ctx={ctx} field="debtorAddress" html="[ທີ່ຢູ່ / Địa chỉ]" as="div" />
-          <div><strong>ເລກອາກອນ:</strong> <EditableText ctx={ctx} field="debtorTax" html="................" /></div>
+          <div><EditableText ctx={ctx} field="debtorTaxLabel" html="<strong>ເລກອາກອນ:</strong>" /> <EditableText ctx={ctx} field="debtorTax" html="................" /></div>
         </div>
         <div>
-          <h2>ຂໍ້ມູນເອກະສານ</h2>
-          <div><strong>ອ້າງອີງ:</strong> <EditableText ctx={ctx} field="debtReference" html="INV-........" className="line-value" /></div>
-          <div><strong>ກຳນົດຊຳລະ:</strong> <EditableText ctx={ctx} field="dueDate" html="..../..../......" className="line-value" /></div>
-          <div><strong>ສະກຸນເງິນ:</strong> <EditableText ctx={ctx} field="currency" html="LAK" className="line-value" /></div>
+          <EditableText ctx={ctx} field="debtInfoHeading" html="ຂໍ້ມູນເອກະສານ" as="h2" />
+          <div><EditableText ctx={ctx} field="debtReferenceLabel" html="<strong>ອ້າງອີງ:</strong>" /> <EditableText ctx={ctx} field="debtReference" html="INV-........" className="line-value" /></div>
+          <div><EditableText ctx={ctx} field="dueDateLabel" html="<strong>ກຳນົດຊຳລະ:</strong>" /> <EditableText ctx={ctx} field="dueDate" html="..../..../......" className="line-value" /></div>
+          <div><EditableText ctx={ctx} field="currencyLabel" html="<strong>ສະກຸນເງິນ:</strong>" /> <EditableText ctx={ctx} field="currency" html="LAK" className="line-value" /></div>
         </div>
       </div>
       <table className="document-table debit-table">
-        <thead><tr><th>ລ/ດ</th><th>ລາຍລະອຽດ / Diễn giải</th><th>ຈຳນວນເງິນ</th></tr></thead>
+        <thead><tr><th><EditableText ctx={ctx} field="debtColumnNumber" html="ລ/ດ" /></th><th><EditableText ctx={ctx} field="debtColumnDescription" html="ລາຍລະອຽດ / Diễn giải" /></th><th><EditableText ctx={ctx} field="debtColumnAmount" html="ຈຳນວນເງິນ" /></th></tr></thead>
         <tbody>
           {[1, 2, 3].map((row) => (
             <tr key={row}>
-              <td>{row}</td>
+              <td><EditableText ctx={ctx} field={`debtRowNumber${row}`} html={String(row)} /></td>
               <td><EditableText ctx={ctx} field={`debtDescription${row}`} html={row === 1 ? "ຄ່າບໍລິການ / Khoản ghi nợ" : "................................"} /></td>
               <td className="amount"><EditableText ctx={ctx} field={`debtAmount${row}`} html={row === 1 ? "0" : "-"} /></td>
             </tr>
           ))}
         </tbody>
         <tfoot>
-          <tr><th colSpan={2}>ຍອດລວມທີ່ຕ້ອງຊຳລະ / Tổng tiền phải trả</th><th className="amount"><EditableText ctx={ctx} field="debtTotal" html="0 LAK" /></th></tr>
+          <tr><th colSpan={2}><EditableText ctx={ctx} field="debtTotalLabel" html="ຍອດລວມທີ່ຕ້ອງຊຳລະ / Tổng tiền phải trả" /></th><th className="amount"><EditableText ctx={ctx} field="debtTotal" html="0 LAK" /></th></tr>
         </tfoot>
       </table>
       <section className="note-box">
-        <h2>ເຫດຜົນການອອກໃບແຈ້ງໜີ້ / Lý do ghi nợ</h2>
+        <EditableText ctx={ctx} field="debtReasonHeading" html="ເຫດຜົນການອອກໃບແຈ້ງໜີ້ / Lý do ghi nợ" as="h2" />
         <EditableText ctx={ctx} field="debtReason" html="[ລາຍລະອຽດເຫດຜົນ / Nội dung phát sinh khoản nợ]" as="p" />
       </section>
       <section className="payment-box keep-together">
-        <h2>ຂໍ້ມູນການຊຳລະ / Thông tin thanh toán</h2>
-        <div><strong>ທະນາຄານ:</strong> <EditableText ctx={ctx} field="bankName" html="[ຊື່ທະນາຄານ]" /></div>
-        <div><strong>ເລກບັນຊີ:</strong> <EditableText ctx={ctx} field="bankAccount" html="[ເລກບັນຊີ]" /></div>
-        <div><strong>ຊື່ບັນຊີ:</strong> <EditableText ctx={ctx} field="accountName" html="[ຊື່ບັນຊີ]" /></div>
+        <EditableText ctx={ctx} field="paymentInfoHeading" html="ຂໍ້ມູນການຊຳລະ / Thông tin thanh toán" as="h2" />
+        <div><EditableText ctx={ctx} field="bankNameLabel" html="<strong>ທະນາຄານ:</strong>" /> <EditableText ctx={ctx} field="bankName" html="[ຊື່ທະນາຄານ]" /></div>
+        <div><EditableText ctx={ctx} field="bankAccountLabel" html="<strong>ເລກບັນຊີ:</strong>" /> <EditableText ctx={ctx} field="bankAccount" html="[ເລກບັນຊີ]" /></div>
+        <div><EditableText ctx={ctx} field="accountNameLabel" html="<strong>ຊື່ບັນຊີ:</strong>" /> <EditableText ctx={ctx} field="accountName" html="[ຊື່ບັນຊີ]" /></div>
       </section>
       <SignatureBlock ctx={ctx} />
     </Paper>
@@ -413,23 +419,23 @@ function QuotationTemplate({ ctx }: { ctx: EditorContext }) {
       <DocumentTitle ctx={ctx} title="ໃບສະເໜີລາຄາ" subtitle="QUOTATION" />
       <div className="two-column-details keep-together">
         <div>
-          <h2>ຮຽນ / Kính gửi</h2>
+          <EditableText ctx={ctx} field="quoteRecipientHeading" html="ຮຽນ / Kính gửi" as="h2" />
           <EditableText ctx={ctx} field="customerName" html="[ຊື່ລູກຄ້າ / Tên khách hàng]" as="div" className="detail-strong" />
           <EditableText ctx={ctx} field="customerAddress" html="[ທີ່ຢູ່ / Địa chỉ]" as="div" />
         </div>
         <div>
-          <h2>ຂໍ້ມູນໃບສະເໜີ</h2>
-          <div><strong>ເລກທີ:</strong> <EditableText ctx={ctx} field="quoteNumber" html="QT-2026-001" className="line-value" /></div>
-          <div><strong>ມີຜົນເຖິງ:</strong> <EditableText ctx={ctx} field="quoteValidUntil" html="..../..../......" className="line-value" /></div>
+          <EditableText ctx={ctx} field="quoteInfoHeading" html="ຂໍ້ມູນໃບສະເໜີ" as="h2" />
+          <div><EditableText ctx={ctx} field="quoteNumberLabel" html="<strong>ເລກທີ:</strong>" /> <EditableText ctx={ctx} field="quoteNumber" html="QT-2026-001" className="line-value" /></div>
+          <div><EditableText ctx={ctx} field="quoteValidUntilLabel" html="<strong>ມີຜົນເຖິງ:</strong>" /> <EditableText ctx={ctx} field="quoteValidUntil" html="..../..../......" className="line-value" /></div>
         </div>
       </div>
       <EditableText ctx={ctx} field="quoteIntro" html="ບໍລິສັດຂໍສະເໜີລາຄາສິນຄ້າ ແລະ ບໍລິການດັ່ງຕໍ່ໄປນີ້:" as="p" />
       <table className="document-table quote-table">
-        <thead><tr><th>ລ/ດ</th><th>ລາຍການ</th><th>ຈຳນວນ</th><th>ລາຄາ/ໜ່ວຍ</th><th>ລວມ</th></tr></thead>
+        <thead><tr><th><EditableText ctx={ctx} field="quoteColumnNumber" html="ລ/ດ" /></th><th><EditableText ctx={ctx} field="quoteColumnItem" html="ລາຍການ" /></th><th><EditableText ctx={ctx} field="quoteColumnQuantity" html="ຈຳນວນ" /></th><th><EditableText ctx={ctx} field="quoteColumnUnitPrice" html="ລາຄາ/ໜ່ວຍ" /></th><th><EditableText ctx={ctx} field="quoteColumnTotal" html="ລວມ" /></th></tr></thead>
         <tbody>
           {[1, 2, 3, 4].map((row) => (
             <tr key={row}>
-              <td>{row}</td>
+              <td><EditableText ctx={ctx} field={`quoteRowNumber${row}`} html={String(row)} /></td>
               <td><EditableText ctx={ctx} field={`quoteItem${row}`} html={row === 1 ? "[ຊື່ສິນຄ້າ / ບໍລິການ]" : "................................"} /></td>
               <td className="amount"><EditableText ctx={ctx} field={`quoteQty${row}`} html={row === 1 ? "1" : "-"} /></td>
               <td className="amount"><EditableText ctx={ctx} field={`quotePrice${row}`} html={row === 1 ? "0" : "-"} /></td>
@@ -438,17 +444,17 @@ function QuotationTemplate({ ctx }: { ctx: EditorContext }) {
           ))}
         </tbody>
         <tfoot>
-          <tr><th colSpan={4}>ລວມກ່ອນອາກອນ</th><th className="amount"><EditableText ctx={ctx} field="quoteSubtotal" html="0" /></th></tr>
-          <tr><th colSpan={4}>ອາກອນ / VAT</th><th className="amount"><EditableText ctx={ctx} field="quoteTax" html="0" /></th></tr>
-          <tr className="grand-total"><th colSpan={4}>ຍອດລວມທັງໝົດ</th><th className="amount"><EditableText ctx={ctx} field="quoteTotal" html="0 LAK" /></th></tr>
+          <tr><th colSpan={4}><EditableText ctx={ctx} field="quoteSubtotalLabel" html="ລວມກ່ອນອາກອນ" /></th><th className="amount"><EditableText ctx={ctx} field="quoteSubtotal" html="0" /></th></tr>
+          <tr><th colSpan={4}><EditableText ctx={ctx} field="quoteTaxLabel" html="ອາກອນ / VAT" /></th><th className="amount"><EditableText ctx={ctx} field="quoteTax" html="0" /></th></tr>
+          <tr className="grand-total"><th colSpan={4}><EditableText ctx={ctx} field="quoteTotalLabel" html="ຍອດລວມທັງໝົດ" /></th><th className="amount"><EditableText ctx={ctx} field="quoteTotal" html="0 LAK" /></th></tr>
         </tfoot>
       </table>
       <section className="terms-box keep-together">
-        <h2>ເງື່ອນໄຂ / Điều kiện</h2>
-        <div>1. <strong>ການຊຳລະ:</strong> <EditableText ctx={ctx} field="paymentTerms" html="ຊຳລະ 50% ລ່ວງໜ້າ" /></div>
-        <div>2. <strong>ການສົ່ງມອບ:</strong> <EditableText ctx={ctx} field="deliveryTerms" html="ພາຍໃນ .... ວັນ" /></div>
-        <div>3. <strong>ອາຍຸໃບສະເໜີ:</strong> <EditableText ctx={ctx} field="validityTerms" html="30 ວັນ" /></div>
-        <div>4. <strong>ໝາຍເຫດ:</strong> <EditableText ctx={ctx} field="quoteNote" html="................................" /></div>
+        <EditableText ctx={ctx} field="termsHeading" html="ເງື່ອນໄຂ / Điều kiện" as="h2" />
+        <EditableText ctx={ctx} field="paymentTerms" html="1. <strong>ການຊຳລະ:</strong> ຊຳລະ 50% ລ່ວງໜ້າ" as="div" />
+        <EditableText ctx={ctx} field="deliveryTerms" html="2. <strong>ການສົ່ງມອບ:</strong> ພາຍໃນ .... ວັນ" as="div" />
+        <EditableText ctx={ctx} field="validityTerms" html="3. <strong>ອາຍຸໃບສະເໜີ:</strong> 30 ວັນ" as="div" />
+        <EditableText ctx={ctx} field="quoteNote" html="4. <strong>ໝາຍເຫດ:</strong> ................................" as="div" />
       </section>
       <SignatureBlock ctx={ctx} />
     </Paper>
@@ -581,13 +587,8 @@ export default function DocumentStudio() {
         const unitel = Math.min(100, Math.max(0, parsed));
         const company = 100 - unitel;
         const companyText = Number.isInteger(company) ? String(company) : company.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
-        const unitelText = Number.isInteger(unitel) ? String(unitel) : unitel.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
         activeDraft.fields.companyRate = companyText;
-        activeDraft.fields.unitelRateNarrative = unitelText;
-        activeDraft.fields.companyRateNarrative = companyText;
         editorRef.current?.querySelectorAll<HTMLElement>("[data-field='companyRate']").forEach((element) => { element.textContent = companyText; });
-        editorRef.current?.querySelectorAll<HTMLElement>("[data-field='unitelRateNarrative']").forEach((element) => { element.textContent = unitelText; });
-        editorRef.current?.querySelectorAll<HTMLElement>("[data-field='companyRateNarrative']").forEach((element) => { element.textContent = companyText; });
       }
     }
     scheduleSave();
@@ -725,6 +726,13 @@ export default function DocumentStudio() {
     fileInputRef.current?.click();
   };
 
+  const removeAsset = (asset: AssetKey) => {
+    delete draftsRef.current[selectedId].assets[asset];
+    setRevision((value) => value + 1);
+    writeStorage(selectedId);
+    showToast("ລຶບຮູບອອກແລ້ວ");
+  };
+
   const uploadAsset = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -846,9 +854,18 @@ export default function DocumentStudio() {
         </div>
         <div className="toolbar-divider" />
         <div className="toolbar-group">
-          <button onClick={() => chooseAsset("logo")}>▧ Logo</button>
-          <button onClick={() => chooseAsset("signature")}>⌁ ລາຍເຊັນ</button>
-          <button onClick={() => chooseAsset("stamp")}>◎ ກາປະທັບ</button>
+          <div className="asset-control">
+            <button onClick={() => chooseAsset("logo")}>▧ Logo</button>
+            {draft.assets.logo ? <button className="remove-asset" aria-label="ລຶບ Logo" title="ລຶບ Logo" onClick={() => removeAsset("logo")}>×</button> : null}
+          </div>
+          <div className="asset-control">
+            <button onClick={() => chooseAsset("signature")}>⌁ ລາຍເຊັນ</button>
+            {draft.assets.signature ? <button className="remove-asset" aria-label="ລຶບລາຍເຊັນ" title="ລຶບລາຍເຊັນ" onClick={() => removeAsset("signature")}>×</button> : null}
+          </div>
+          <div className="asset-control">
+            <button onClick={() => chooseAsset("stamp")}>◎ ກາປະທັບ</button>
+            {draft.assets.stamp ? <button className="remove-asset" aria-label="ລຶບກາປະທັບ" title="ລຶບກາປະທັບ" onClick={() => removeAsset("stamp")}>×</button> : null}
+          </div>
           <label className="logo-size-control">ຂະໜາດ Logo <input type="range" min="56" max="150" value={draft.settings.logoWidth} onChange={(event) => {
             draftsRef.current[selectedId].settings.logoWidth = Number(event.target.value);
             setRevision((value) => value + 1);
@@ -943,8 +960,8 @@ export default function DocumentStudio() {
           </section>
 
           <div className="catalog-tip">
-            <strong>ແບບຟອມແຍກກັນ</strong>
-            <p>ແຕ່ລະແບບຟອມຖືກບັນທຶກແຍກກັນ. ການປ່ຽນແບບຟອມຈະບໍ່ເຮັດໃຫ້ເນື້ອຫາສູນເສຍ.</p>
+            <strong>ແບບຟອມເປັນພຽງຈຸດເລີ່ມຕົ້ນ</strong>
+            <p>ກົດໃສ່ຂໍ້ຄວາມໃດກໍໄດ້ເພື່ອແກ້ໄຂ ຫຼື ລຶບໃຫ້ຫວ່າງ. ແຕ່ລະແບບຟອມຈະບັນທຶກແຍກກັນ.</p>
           </div>
         </aside>
 
