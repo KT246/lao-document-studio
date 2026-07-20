@@ -556,6 +556,14 @@ input:focus-visible,
   text-align: justify;
 }
 
+.custom-document-line {
+  min-height: 23px;
+}
+
+.custom-line-text {
+  min-height: 23px;
+}
+
 .keep-together,
 .document-table,
 .form-grid {

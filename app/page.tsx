@@ -22,6 +22,7 @@ type TemplateDefinition = {
 type DocumentDraft = {
   fields: Record<string, string>;
   removedFields: string[];
+  customLines: string[];
   assets: Partial<Record<AssetKey, string>>;
   settings: {
     logoWidth: number;
@@ -36,6 +37,7 @@ type EditorContext = {
   editing: boolean;
   onFieldChange: (field: string, html: string, text: string) => void;
   onRemoveField: (field: string) => void;
+  onRemoveCustomLine: (field: string) => void;
   onRestoreField: (field: string) => void;
   onPageCountChange: (pageCount: number) => void;
 };
@@ -95,6 +97,7 @@ function createDraft(): DocumentDraft {
   return {
     fields: {},
     removedFields: [],
+    customLines: [],
     assets: {},
     settings: {
       logoWidth: 92,
@@ -116,6 +119,7 @@ function createDraftCollection(): Record<TemplateId, DocumentDraft> {
 function hasDraftChanges(draft: DocumentDraft) {
   return Object.keys(draft.fields).length > 0
     || draft.removedFields.length > 0
+    || draft.customLines.length > 0
     || Object.values(draft.assets).some(Boolean)
     || draft.settings.logoWidth !== 92
     || draft.settings.laoFont !== "noto-sans-lao"
@@ -130,6 +134,7 @@ type EditableTextProps = {
   as?: React.ElementType;
   className?: string;
   placeholder?: string;
+  onRemove?: () => void;
 };
 
 function EditableText({
@@ -138,7 +143,8 @@ function EditableText({
   html,
   as: Tag = "span",
   className = "",
-  placeholder = "ພິມເນື້ອຫາ..."
+  placeholder = "ພິມເນື້ອຫາ...",
+  onRemove
 }: EditableTextProps) {
   const value = ctx.draft.fields[field] ?? html;
   const removed = ctx.draft.removedFields.includes(field);
@@ -182,6 +188,15 @@ function EditableText({
               const element = event.currentTarget;
               ctx.onFieldChange(field, element.innerHTML, element.textContent ?? "");
             }}
+            onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
+              if (event.key !== "Enter") return;
+              event.preventDefault();
+              document.execCommand("insertLineBreak");
+              const element = event.currentTarget;
+              window.requestAnimationFrame(() => {
+                ctx.onFieldChange(field, element.innerHTML, element.textContent ?? "");
+              });
+            }}
             dangerouslySetInnerHTML={{ __html: initialValueRef.current }}
           />
           {ctx.editing ? (
@@ -191,7 +206,7 @@ function EditableText({
               aria-label="ລຶບຂໍ້ຄວາມສ່ວນນີ້"
               title="ລຶບຂໍ້ຄວາມສ່ວນນີ້"
               onMouseDown={(event) => event.preventDefault()}
-              onClick={() => ctx.onRemoveField(field)}
+              onClick={() => onRemove ? onRemove() : ctx.onRemoveField(field)}
             >
               ×
             </button>
@@ -200,6 +215,22 @@ function EditableText({
       )}
     </Shell>
   );
+}
+
+function renderCustomDocumentLines(ctx: EditorContext) {
+  return ctx.draft.customLines.map((field) => (
+    <div className="custom-document-line" key={field}>
+      <EditableText
+        ctx={ctx}
+        field={field}
+        html=""
+        as="p"
+        className="custom-line-text"
+        placeholder="ພິມເນື້ອຫາບັນທັດໃໝ່..."
+        onRemove={() => ctx.onRemoveCustomLine(field)}
+      />
+    </div>
+  ));
 }
 
 function Paper({ children, label }: { children: React.ReactNode; label: string }) {
@@ -505,6 +536,7 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
         <EditableText ctx={ctx} field="conclusionHeading" html="5. ສະຫຼຸບ" as="h2" className="section-heading top-heading" />
         <EditableText ctx={ctx} field="conclusion1" html="ດັ່ງນັ້ນ, ຈຶ່ງຮຽນສະເໜີມາຍັງທ່ານ ເພື່ອຄົ້ນຄວ້າ ແລະ ພິຈາລະນາຕາມເຫັນສົມຄວນດ້ວຍ." as="p" />
         <EditableText ctx={ctx} field="conclusion2" html="ຮຽນມາດ້ວຍຄວາມເຄົາລົບຢ່າງສູງ." as="p" />
+        {renderCustomDocumentLines(ctx)}
         <SignatureBlock ctx={ctx} />
         <EditableText ctx={ctx} field="attachmentsHeading" html="ເອກະສານຄັດຕິດ:" as="h2" className="section-heading" />
         <div className="numbered-list attachments-list">
@@ -572,6 +604,7 @@ function DebtNoteTemplate({ ctx }: { ctx: EditorContext }) {
         <div><EditableText ctx={ctx} field="bankAccountLabel" html="<strong>ເລກບັນຊີ:</strong>" /> <EditableText ctx={ctx} field="bankAccount" html="[ເລກບັນຊີ]" /></div>
         <div><EditableText ctx={ctx} field="accountNameLabel" html="<strong>ຊື່ບັນຊີ:</strong>" /> <EditableText ctx={ctx} field="accountName" html="[ຊື່ບັນຊີ]" /></div>
       </section>
+      {renderCustomDocumentLines(ctx)}
       <SignatureBlock ctx={ctx} />
     </PaginatedDocument>
   );
@@ -622,6 +655,7 @@ function QuotationTemplate({ ctx }: { ctx: EditorContext }) {
         <EditableText ctx={ctx} field="validityTerms" html="3. <strong>ອາຍຸໃບສະເໜີ:</strong> 30 ວັນ" as="div" />
         <EditableText ctx={ctx} field="quoteNote" html="4. <strong>ໝາຍເຫດ:</strong> ................................" as="div" />
       </section>
+      {renderCustomDocumentLines(ctx)}
       <SignatureBlock ctx={ctx} />
     </PaginatedDocument>
   );
@@ -820,6 +854,7 @@ export default function DocumentStudio() {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const pendingCustomLineFocusRef = useRef<string | null>(null);
   const statusRef = useRef<HTMLSpanElement>(null);
   const confirmDownloadButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -924,6 +959,7 @@ export default function DocumentStudio() {
               nextDrafts[id] = {
                 fields: storedFields,
                 removedFields: Array.isArray(stored.removedFields) ? stored.removedFields : [],
+                customLines: Array.isArray(stored.customLines) ? stored.customLines : [],
                 assets: stored.assets ?? {},
                 settings: {
                   logoWidth: stored.settings?.logoWidth ?? 92,
@@ -964,6 +1000,32 @@ export default function DocumentStudio() {
     document.addEventListener("selectionchange", rememberSelection);
     return () => document.removeEventListener("selectionchange", rememberSelection);
   }, []);
+
+  useLayoutEffect(() => {
+    const field = pendingCustomLineFocusRef.current;
+    if (!field) return;
+    let frame = 0;
+    let attempts = 0;
+    const focusNewLine = () => {
+      const element = editorRef.current?.querySelector<HTMLElement>(`[data-field="${field}"]`);
+      if (!element && attempts < 4) {
+        attempts += 1;
+        frame = window.requestAnimationFrame(focusNewLine);
+        return;
+      }
+      if (!element) return;
+      pendingCustomLineFocusRef.current = null;
+      element.focus();
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      range.collapse(false);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    };
+    frame = window.requestAnimationFrame(focusNewLine);
+    return () => window.cancelAnimationFrame(frame);
+  }, [editing, revision, selectedId]);
 
   useEffect(() => () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -1066,6 +1128,30 @@ export default function DocumentStudio() {
     showToast("ເພີ່ມສ່ວນຂໍ້ຄວາມຄືນແລ້ວ");
   }, [selectedId, showToast, writeStorage]);
 
+  const addCustomLine = () => {
+    const field = `custom-line-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const activeDraft = draftsRef.current[selectedId];
+    activeDraft.customLines.push(field);
+    activeDraft.fields[field] = "";
+    pendingCustomLineFocusRef.current = field;
+    setEditing(true);
+    setRevision((value) => value + 1);
+    setCatalogRevision((value) => value + 1);
+    writeStorage(selectedId);
+    showToast("ເພີ່ມບັນທັດໃໝ່ແລ້ວ");
+  };
+
+  const removeCustomLine = useCallback((field: string) => {
+    const activeDraft = draftsRef.current[selectedId];
+    activeDraft.customLines = activeDraft.customLines.filter((customField) => customField !== field);
+    delete activeDraft.fields[field];
+    activeDraft.removedFields = activeDraft.removedFields.filter((removedField) => removedField !== field);
+    setRevision((value) => value + 1);
+    setCatalogRevision((value) => value + 1);
+    writeStorage(selectedId);
+    showToast("ລຶບບັນທັດແລ້ວ");
+  }, [selectedId, showToast, writeStorage]);
+
   const uploadAsset = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     const asset = pendingAssetRef.current;
@@ -1153,6 +1239,7 @@ export default function DocumentStudio() {
     editing,
     onFieldChange: handleFieldChange,
     onRemoveField: removeField,
+    onRemoveCustomLine: removeCustomLine,
     onRestoreField: restoreField,
     onPageCountChange: setDocumentPageCount
   };
@@ -1199,6 +1286,10 @@ export default function DocumentStudio() {
           <button aria-label="ຈັດຊ້າຍ" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("justifyLeft")}>≡</button>
           <button aria-label="ຈັດກາງ" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("justifyCenter")}>≣</button>
           <button aria-label="ຈັດເຕັມ" onMouseDown={(event) => event.preventDefault()} onClick={() => formatText("justifyFull")}>☰</button>
+        </div>
+        <div className="toolbar-divider" />
+        <div className="toolbar-group">
+          <button onClick={addCustomLine}>＋ ເພີ່ມບັນທັດ</button>
         </div>
         <div className="toolbar-divider" />
         <div className="toolbar-group">
