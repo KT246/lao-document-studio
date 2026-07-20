@@ -27,6 +27,7 @@ type DocumentDraft = {
     logoWidth: number;
     laoFont: LaoFontId;
     englishFont: EnglishFontId;
+    showNationalEmblem: boolean;
   };
 };
 
@@ -96,7 +97,8 @@ function createDraft(): DocumentDraft {
     settings: {
       logoWidth: 92,
       laoFont: "noto-sans-lao",
-      englishFont: "inter"
+      englishFont: "inter",
+      showNationalEmblem: false
     }
   };
 }
@@ -115,7 +117,8 @@ function hasDraftChanges(draft: DocumentDraft) {
     || Object.values(draft.assets).some(Boolean)
     || draft.settings.logoWidth !== 92
     || draft.settings.laoFont !== "noto-sans-lao"
-    || draft.settings.englishFont !== "inter";
+    || draft.settings.englishFont !== "inter"
+    || draft.settings.showNationalEmblem;
 }
 
 type EditableTextProps = {
@@ -186,21 +189,10 @@ function EditableText({
   );
 }
 
-function Paper({
-  children,
-  label,
-  official = false,
-  pageNumber
-}: {
-  children: React.ReactNode;
-  label: string;
-  official?: boolean;
-  pageNumber?: number;
-}) {
+function Paper({ children, label }: { children: React.ReactNode; label: string }) {
   return (
-    <section className={`paper ${official ? "official-paper" : ""}`.trim()} aria-label={label}>
+    <section className="paper" aria-label={label}>
       <div className="paper-content">{children}</div>
-      {official ? <footer className="official-page-number">{pageNumber}</footer> : null}
     </section>
   );
 }
@@ -208,12 +200,10 @@ function Paper({
 function PaginatedDocument({
   children,
   label,
-  official = false,
   onPageCountChange
 }: {
   children: React.ReactNode;
   label: string;
-  official?: boolean;
   onPageCountChange: (pageCount: number) => void;
 }) {
   const blocks = React.Children.toArray(children);
@@ -286,12 +276,7 @@ function PaginatedDocument({
   return (
     <div className="auto-paginated-document" onBlurCapture={() => window.setTimeout(schedulePagination, 0)}>
       {pages.map((page, pageIndex) => (
-        <Paper
-          key={pageIndex}
-          label={`${label} — ໜ້າ ${pageIndex + 1}`}
-          official={official}
-          pageNumber={pageIndex + 1}
-        >
+        <Paper key={pageIndex} label={`${label} — ໜ້າ ${pageIndex + 1}`}>
           {page.map((blockIndex) => {
             const block = blocks[blockIndex];
             const blockKey = React.isValidElement(block) && block.key !== null ? block.key : blockIndex;
@@ -314,86 +299,48 @@ function PaginatedDocument({
   );
 }
 
-function OfficialLaoHeader({ ctx }: { ctx: EditorContext }) {
-  const organizationLogo = ctx.draft.assets.logo || "/logo.png";
-
+function NationalHeader({ ctx }: { ctx: EditorContext }) {
   return (
-    <header className="official-lao-header keep-together">
-      <div className="official-header-top">
-        <div className="official-issuer">
-          <div
-            className="official-organization-logo"
-            style={{ width: `${Math.min(ctx.draft.settings.logoWidth, 92)}px` }}
-          >
-            <img src={organizationLogo} alt="Logo ອົງກອນ" />
-          </div>
-          <div className="official-issuer-copy">
-            <EditableText
-              ctx={ctx}
-              field="officialIssuerName"
-              html="ບໍລິສັດ [ຊື່ບໍລິສັດ]"
-              as="div"
-              className="official-issuer-name"
-            />
-            <EditableText
-              ctx={ctx}
-              field="officialIssuerOffice"
-              html="[ພະແນກ / ຫ້ອງການ]"
-              as="div"
-            />
-            <EditableText
-              ctx={ctx}
-              field="issuedBy"
-              html="<strong>ອອກໃຫ້ໂດຍ:</strong> TJ Group<br><strong>Issued by:</strong> TJ Group"
-              as="div"
-              className="official-issued-by"
-            />
-          </div>
-        </div>
+    <header className="national-header keep-together">
+      {ctx.draft.settings.showNationalEmblem ? (
         <img
-          className="official-national-emblem"
+          className="national-emblem"
           src="/lao-national-emblem.png"
           alt="ເຄື່ອງໝາຍຊາດ ສປປ ລາວ"
         />
-      </div>
-      <div className="official-national-copy">
-        <EditableText
-          ctx={ctx}
-          field="nationalTitle"
-          html="ສາທາລະນະລັດ ປະຊາທິປະໄຕ ປະຊາຊົນລາວ"
-          as="div"
-          className="national-title"
-        />
-        <EditableText
-          ctx={ctx}
-          field="nationalMotto"
-          html="ສັນຕິພາບ ເອກະລາດ ປະຊາທິປະໄຕ ເອກະພາບ ວັດທະນະຖາວອນ"
-          as="div"
-          className="national-motto"
-        />
-      </div>
-      <div className="official-document-meta">
-        <div>
-          <EditableText ctx={ctx} field="documentNumberLabel" html="ເລກທີ:" />{" "}
-          <EditableText ctx={ctx} field="documentNumber" html="...../....." className="official-line-value" />
-        </div>
-        <div>
-          <EditableText ctx={ctx} field="documentPlace" html="ນະຄອນຫຼວງວຽງຈັນ" />,
-          {" "}<EditableText ctx={ctx} field="documentDateLabel" html="ວັນທີ" />{" "}
-          <EditableText ctx={ctx} field="documentDate" html="..... ເດືອນ ..... ປີ ......" className="official-line-value" />
-        </div>
-      </div>
+      ) : null}
+      <EditableText
+        ctx={ctx}
+        field="nationalTitle"
+        html="ສາທາລະນະລັດ ປະຊາທິປະໄຕ ປະຊາຊົນລາວ"
+        as="div"
+        className="national-title"
+      />
+      <EditableText
+        ctx={ctx}
+        field="nationalMotto"
+        html="ສັນຕິພາບ ເອກະລາດ ປະຊາທິປະໄຕ ເອກະພາບ ວັດທະນະຖາວອນ"
+        as="div"
+        className="national-motto"
+      />
+      <EditableText
+        ctx={ctx}
+        field="nationalDivider"
+        html="──────────── ວ ວ ────────────"
+        as="div"
+        className="national-divider"
+      />
     </header>
   );
 }
 
 function CompanyHeader({ ctx, compact = false }: { ctx: EditorContext; compact?: boolean }) {
-  const logo = ctx.draft.assets.logo || "/logo.png";
+  const logo = ctx.draft.assets.logo;
   return (
     <section className={`company-header keep-together ${compact ? "is-compact" : ""}`}>
       <div className="company-side">
         <div className="document-logo" style={{ width: `${ctx.draft.settings.logoWidth}px` }}>
-          <img src={logo} alt="Logo ບໍລິສັດ" />
+          {logo ? <img src={logo} alt="Logo ບໍລິສັດ" /> : <span>Logo</span>}
         </div>
         <div className="company-copy">
           <EditableText ctx={ctx} field="companyName" html="[ຊື່ບໍລິສັດ]" as="div" className="company-name" />
@@ -448,8 +395,9 @@ function SignatureBlock({ ctx }: { ctx: EditorContext }) {
 
 function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
   return (
-    <PaginatedDocument label="ໃບສະເໜີຮ່ວມມື" official onPageCountChange={ctx.onPageCountChange}>
-        <OfficialLaoHeader ctx={ctx} />
+    <PaginatedDocument label="ໃບສະເໜີຮ່ວມມື" onPageCountChange={ctx.onPageCountChange}>
+        <NationalHeader ctx={ctx} />
+        <CompanyHeader ctx={ctx} />
         <DocumentTitle
           ctx={ctx}
           title="ໃບສະເໜີຂໍຮ່ວມມືທາງທຸລະກິດ"
@@ -553,6 +501,7 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
 function DebtNoteTemplate({ ctx }: { ctx: EditorContext }) {
   return (
     <PaginatedDocument label="ໃບແຈ້ງໜີ້" onPageCountChange={ctx.onPageCountChange}>
+      <NationalHeader ctx={ctx} />
       <CompanyHeader ctx={ctx} compact />
       <DocumentTitle ctx={ctx} title="ໃບແຈ້ງໜີ້" subtitle="DEBIT NOTE" />
       <div className="two-column-details keep-together">
@@ -602,6 +551,7 @@ function DebtNoteTemplate({ ctx }: { ctx: EditorContext }) {
 function QuotationTemplate({ ctx }: { ctx: EditorContext }) {
   return (
     <PaginatedDocument label="ໃບສະເໜີລາຄາ" onPageCountChange={ctx.onPageCountChange}>
+      <NationalHeader ctx={ctx} />
       <CompanyHeader ctx={ctx} compact />
       <DocumentTitle ctx={ctx} title="ໃບສະເໜີລາຄາ" subtitle="QUOTATION" />
       <div className="two-column-details keep-together">
@@ -803,7 +753,8 @@ export default function DocumentStudio() {
                     : "noto-sans-lao",
                   englishFont: ENGLISH_FONTS.some((font) => font.id === stored.settings?.englishFont)
                     ? stored.settings?.englishFont ?? "inter"
-                    : "inter"
+                    : "inter",
+                  showNationalEmblem: stored.settings?.showNationalEmblem ?? false
                 }
               };
             }
@@ -1060,6 +1011,18 @@ export default function DocumentStudio() {
         </div>
         <div className="toolbar-divider" />
         <div className="toolbar-group">
+          <button
+            className={draft.settings.showNationalEmblem ? "active" : ""}
+            aria-pressed={draft.settings.showNationalEmblem}
+            title="ສະແດງ ຫຼື ເຊື່ອງເຄື່ອງໝາຍຊາດໃນເອກະສານນີ້"
+            onClick={() => {
+              draftsRef.current[selectedId].settings.showNationalEmblem = !draft.settings.showNationalEmblem;
+              setRevision((value) => value + 1);
+              scheduleSave();
+            }}
+          >
+            ◉ ເຄື່ອງໝາຍຊາດ
+          </button>
           <div className="asset-control">
             <button onClick={() => chooseAsset("logo")}>▧ Logo</button>
             {draft.assets.logo ? <button className="remove-asset" aria-label="ລຶບ Logo" title="ລຶບ Logo" onClick={() => removeAsset("logo")}>×</button> : null}
