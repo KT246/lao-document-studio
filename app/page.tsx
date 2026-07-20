@@ -411,7 +411,6 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
         <DocumentTitle
           ctx={ctx}
           title="ໃບສະເໜີຂໍຮ່ວມມືທາງທຸລະກິດ"
-          subtitle="<strong>ເລື່ອງ:</strong> ຂໍຮ່ວມມືເຊື່ອມຕໍ່ລະບົບຮັບຊຳລະເງິນຜ່ານມູນຄ່າໂທ Unitel ເບີຫຼັກ 9"
         />
         <EditableText
           ctx={ctx}
@@ -419,6 +418,13 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
           html="<strong>ຮຽນ:</strong><br>ທ່ານ ຜູ້ອຳນວຍການໃຫຍ່<br>ບໍລິສັດ ສະຕາ ໂທລະຄົມ ຈຳກັດ<br>Star Telecom Co., Ltd. – Unitel"
           as="div"
           className="recipient"
+        />
+        <EditableText
+          ctx={ctx}
+          field="documentSubtitle"
+          html="<strong>ເລື່ອງ:</strong> ຂໍຮ່ວມມືເຊື່ອມຕໍ່ລະບົບຮັບຊຳລະເງິນຜ່ານມູນຄ່າໂທ Unitel ເບີຫຼັກ 9"
+          as="p"
+          className="formal-subject"
         />
         <EditableText ctx={ctx} field="basisHeading" html="ອີງຕາມ:" as="h2" className="section-heading" />
         <EditableText ctx={ctx} field="basis1" html="– ອີງຕາມ ໃບທະບຽນວິສາຫະກິດ ເລກທີ ............ ລົງວັນທີ ............;" as="p" />

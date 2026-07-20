@@ -703,6 +703,11 @@ input:focus-visible,
   margin: 0 0 11px 15px;
 }
 
+.formal-subject {
+  margin: 0 0 11px 15px !important;
+  text-align: left !important;
+}
+
 .section-heading,
 .note-box h2,
 .payment-box h2,
