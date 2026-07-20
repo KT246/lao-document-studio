@@ -344,15 +344,15 @@ function PaginatedDocument({
 }
 
 function NationalHeader({ ctx }: { ctx: EditorContext }) {
+  if (!ctx.draft.settings.showNationalEmblem) return null;
+
   return (
     <header className="national-header keep-together">
-      {ctx.draft.settings.showNationalEmblem ? (
-        <img
-          className="national-emblem"
-          src="/lao-national-emblem.png"
-          alt="ເຄື່ອງໝາຍຊາດ ສປປ ລາວ"
-        />
-      ) : null}
+      <img
+        className="national-emblem"
+        src="/lao-national-emblem.png"
+        alt="ເຄື່ອງໝາຍຊາດ ສປປ ລາວ"
+      />
       <EditableText
         ctx={ctx}
         field="nationalTitle"
