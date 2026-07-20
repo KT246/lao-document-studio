@@ -4,12 +4,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 type TemplateId = "cooperation" | "debt-note" | "quotation";
 type AssetKey = "logo" | "signature" | "stamp";
+type TemplateCategory = "cooperation" | "finance" | "sales";
+type CategoryFilter = "all" | TemplateCategory;
+type PageFilter = "all" | "single" | "multiple";
+type StatusFilter = "all" | "edited" | "blank";
+type LaoFontId = "noto-sans-lao" | "noto-sans-lao-looped" | "noto-serif-lao" | "phetsarath-ot";
+type EnglishFontId = "inter" | "noto-sans" | "lora" | "ibm-plex-sans";
 
 type TemplateDefinition = {
   id: TemplateId;
   laoName: string;
   description: string;
   code: string;
+  category: TemplateCategory;
   pages: number;
   fileName: string;
 };
@@ -19,6 +26,8 @@ type DocumentDraft = {
   assets: Partial<Record<AssetKey, string>>;
   settings: {
     logoWidth: number;
+    laoFont: LaoFontId;
+    englishFont: EnglishFontId;
   };
 };
 
@@ -30,12 +39,33 @@ type EditorContext = {
 
 const STORAGE_KEY = "lao-document-studio.v1";
 
+const TEMPLATE_CATEGORIES: Array<{ id: TemplateCategory; label: string }> = [
+  { id: "cooperation", label: "ການຮ່ວມມື" },
+  { id: "finance", label: "ການເງິນ" },
+  { id: "sales", label: "ການຂາຍ" }
+];
+
+const LAO_FONTS: Array<{ id: LaoFontId; label: string; css: string }> = [
+  { id: "noto-sans-lao", label: "Noto Sans Lao", css: '"Noto Sans Lao"' },
+  { id: "noto-sans-lao-looped", label: "Noto Sans Lao Looped", css: '"Noto Sans Lao Looped", "Noto Sans Lao"' },
+  { id: "noto-serif-lao", label: "Noto Serif Lao", css: '"Noto Serif Lao", "Noto Sans Lao"' },
+  { id: "phetsarath-ot", label: "Phetsarath OT", css: '"Phetsarath OT", "Noto Sans Lao"' }
+];
+
+const ENGLISH_FONTS: Array<{ id: EnglishFontId; label: string; css: string }> = [
+  { id: "inter", label: "Inter", css: '"Inter"' },
+  { id: "noto-sans", label: "Noto Sans", css: '"Noto Sans"' },
+  { id: "lora", label: "Lora", css: '"Lora"' },
+  { id: "ibm-plex-sans", label: "IBM Plex Sans", css: '"IBM Plex Sans"' }
+];
+
 const TEMPLATES: TemplateDefinition[] = [
   {
     id: "cooperation",
     laoName: "ໃບສະເໜີຂໍຮ່ວມມືທາງທຸລະກິດ",
     description: "ເຊື່ອມຕໍ່ການຊຳລະຜ່ານ Unitel ເບີຂຶ້ນຕົ້ນ 9.",
     code: "COOP",
+    category: "cooperation",
     pages: 3,
     fileName: "Unitel_Business_Cooperation_Proposal.pdf"
   },
@@ -44,6 +74,7 @@ const TEMPLATES: TemplateDefinition[] = [
     laoName: "ໃບແຈ້ງໜີ້",
     description: "ແຈ້ງລາຍການໜີ້, ສາເຫດ ແລະ ກຳນົດຊຳລະ.",
     code: "DEBT",
+    category: "finance",
     pages: 1,
     fileName: "Lao_Debit_Note.pdf"
   },
@@ -52,13 +83,22 @@ const TEMPLATES: TemplateDefinition[] = [
     laoName: "ໃບສະເໜີລາຄາ",
     description: "ສະເໜີລາຄາສິນຄ້າ, ບໍລິການ ແລະ ເງື່ອນໄຂ.",
     code: "QUOTE",
+    category: "sales",
     pages: 1,
     fileName: "Lao_Quotation.pdf"
   }
 ];
 
 function createDraft(): DocumentDraft {
-  return { fields: {}, assets: {}, settings: { logoWidth: 92 } };
+  return {
+    fields: {},
+    assets: {},
+    settings: {
+      logoWidth: 92,
+      laoFont: "noto-sans-lao",
+      englishFont: "inter"
+    }
+  };
 }
 
 function createDraftCollection(): Record<TemplateId, DocumentDraft> {
@@ -67,6 +107,14 @@ function createDraftCollection(): Record<TemplateId, DocumentDraft> {
     "debt-note": createDraft(),
     quotation: createDraft()
   };
+}
+
+function hasDraftChanges(draft: DocumentDraft) {
+  return Object.keys(draft.fields).length > 0
+    || Object.values(draft.assets).some(Boolean)
+    || draft.settings.logoWidth !== 92
+    || draft.settings.laoFont !== "noto-sans-lao"
+    || draft.settings.englishFont !== "inter";
 }
 
 type EditableTextProps = {
@@ -425,8 +473,13 @@ export default function DocumentStudio() {
   const [selectedId, setSelectedId] = useState<TemplateId>("cooperation");
   const [editing, setEditing] = useState(true);
   const [revision, setRevision] = useState(0);
+  const [catalogRevision, setCatalogRevision] = useState(0);
   const [toast, setToast] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
+  const [pageFilter, setPageFilter] = useState<PageFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const draftsRef = useRef<Record<TemplateId, DocumentDraft>>(createDraftCollection());
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -441,6 +494,33 @@ export default function DocumentStudio() {
     [selectedId]
   );
   const draft = draftsRef.current[selectedId];
+  const selectedLaoFont = LAO_FONTS.find((font) => font.id === draft.settings.laoFont) ?? LAO_FONTS[0];
+  const selectedEnglishFont = ENGLISH_FONTS.find((font) => font.id === draft.settings.englishFont) ?? ENGLISH_FONTS[0];
+  const documentFontStyle = {
+    "--document-lao-font": selectedLaoFont.css,
+    "--document-english-font": selectedEnglishFont.css
+  } as React.CSSProperties;
+
+  const filteredTemplates = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase("lo-LA");
+    return TEMPLATES.filter((template) => {
+      const categoryLabel = TEMPLATE_CATEGORIES.find((category) => category.id === template.category)?.label ?? "";
+      const matchesQuery = !normalizedQuery || [template.laoName, template.description, template.code, categoryLabel]
+        .some((value) => value.toLocaleLowerCase("lo-LA").includes(normalizedQuery));
+      const matchesCategory = categoryFilter === "all" || template.category === categoryFilter;
+      const matchesPages = pageFilter === "all"
+        || (pageFilter === "single" ? template.pages === 1 : template.pages > 1);
+      const edited = hasDraftChanges(draftsRef.current[template.id]);
+      const matchesStatus = statusFilter === "all"
+        || (statusFilter === "edited" ? edited : !edited);
+      return matchesQuery && matchesCategory && matchesPages && matchesStatus;
+    });
+  }, [catalogRevision, categoryFilter, pageFilter, revision, searchQuery, statusFilter]);
+
+  const filtersActive = Boolean(searchQuery)
+    || categoryFilter !== "all"
+    || pageFilter !== "all"
+    || statusFilter !== "all";
 
   const showToast = useCallback((message: string) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -469,7 +549,10 @@ export default function DocumentStudio() {
   const scheduleSave = useCallback(() => {
     if (statusRef.current) statusRef.current.textContent = "ກຳລັງບັນທຶກ...";
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => writeStorage(selectedId), 650);
+    saveTimerRef.current = setTimeout(() => {
+      writeStorage(selectedId);
+      setCatalogRevision((value) => value + 1);
+    }, 650);
   }, [selectedId, writeStorage]);
 
   const handleFieldChange = useCallback((field: string, html: string, text: string) => {
@@ -511,7 +594,15 @@ export default function DocumentStudio() {
               nextDrafts[id] = {
                 fields: stored.fields ?? {},
                 assets: stored.assets ?? {},
-                settings: { logoWidth: stored.settings?.logoWidth ?? 92 }
+                settings: {
+                  logoWidth: stored.settings?.logoWidth ?? 92,
+                  laoFont: LAO_FONTS.some((font) => font.id === stored.settings?.laoFont)
+                    ? stored.settings?.laoFont ?? "noto-sans-lao"
+                    : "noto-sans-lao",
+                  englishFont: ENGLISH_FONTS.some((font) => font.id === stored.settings?.englishFont)
+                    ? stored.settings?.englishFont ?? "inter"
+                    : "inter"
+                }
               };
             }
           });
@@ -520,6 +611,7 @@ export default function DocumentStudio() {
             setSelectedId(parsed.selectedId);
           }
           setRevision((value) => value + 1);
+          setCatalogRevision((value) => value + 1);
         }
       }
     } catch {
@@ -551,6 +643,27 @@ export default function DocumentStudio() {
     writeStorage(nextId);
     setSelectedId(nextId);
     setRevision((value) => value + 1);
+  };
+
+  const updateLaoFont = (fontId: LaoFontId) => {
+    draftsRef.current[selectedId].settings.laoFont = fontId;
+    setRevision((value) => value + 1);
+    setCatalogRevision((value) => value + 1);
+    writeStorage(selectedId);
+  };
+
+  const updateEnglishFont = (fontId: EnglishFontId) => {
+    draftsRef.current[selectedId].settings.englishFont = fontId;
+    setRevision((value) => value + 1);
+    setCatalogRevision((value) => value + 1);
+    writeStorage(selectedId);
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setCategoryFilter("all");
+    setPageFilter("all");
+    setStatusFilter("all");
   };
 
   const formatText = (command: string) => {
@@ -665,7 +778,7 @@ export default function DocumentStudio() {
 
       <section className="studio-toolbar" aria-label="ແຖບເຄື່ອງມື">
         <label className="template-select-label">
-          <span>ປະເພດເອກະສານ</span>
+          <span>ເອກະສານທີ່ເລືອກ</span>
           <select value={selectedId} onChange={(event) => selectTemplate(event.target.value as TemplateId)}>
             {TEMPLATES.map((template) => (
               <option key={template.id} value={template.id}>{template.laoName}</option>
@@ -709,12 +822,52 @@ export default function DocumentStudio() {
 
       <div className="studio-body">
         <aside className="template-catalog" aria-label="ລາຍການແບບຟອມ">
+          <section className="catalog-filters" aria-label="ຕົວກອງແບບຟອມ">
+            <label className="catalog-search">
+              <span>ຄົ້ນຫາ</span>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="ຊື່, ລາຍລະອຽດ, ລະຫັດ..."
+              />
+            </label>
+            <div className="filter-grid">
+              <label>
+                <span>ປະເພດເອກະສານ</span>
+                <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as CategoryFilter)}>
+                  <option value="all">ທັງໝົດ</option>
+                  {TEMPLATE_CATEGORIES.map((category) => (
+                    <option key={category.id} value={category.id}>{category.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>ສະຖານະ</span>
+                <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}>
+                  <option value="all">ທັງໝົດ</option>
+                  <option value="edited">ມີການແກ້ໄຂ</option>
+                  <option value="blank">ຍັງບໍ່ໄດ້ແກ້ໄຂ</option>
+                </select>
+              </label>
+              <label>
+                <span>ຈຳນວນໜ້າ</span>
+                <select value={pageFilter} onChange={(event) => setPageFilter(event.target.value as PageFilter)}>
+                  <option value="all">ທັງໝົດ</option>
+                  <option value="single">1 ໜ້າ</option>
+                  <option value="multiple">2+ ໜ້າ</option>
+                </select>
+              </label>
+              <button type="button" className="clear-filters" disabled={!filtersActive} onClick={clearFilters}>↺ ລ້າງຕົວກອງ</button>
+            </div>
+          </section>
+
           <div className="catalog-heading">
             <span>ລາຍການແບບຟອມ</span>
-            <b>{TEMPLATES.length} ແບບ</b>
+            <b>{filteredTemplates.length}/{TEMPLATES.length} ແບບ</b>
           </div>
           <div className="template-list">
-            {TEMPLATES.map((template) => (
+            {filteredTemplates.map((template) => (
               <button
                 key={template.id}
                 className={`template-card ${template.id === selectedId ? "selected" : ""}`}
@@ -724,10 +877,45 @@ export default function DocumentStudio() {
                 <span className="template-code">{template.code}</span>
                 <strong>{template.laoName}</strong>
                 <small>{template.description}</small>
+                <div className="template-badges">
+                  <span>{TEMPLATE_CATEGORIES.find((category) => category.id === template.category)?.label}</span>
+                  <span className={hasDraftChanges(draftsRef.current[template.id]) ? "is-edited" : ""}>
+                    {hasDraftChanges(draftsRef.current[template.id]) ? "ແກ້ໄຂແລ້ວ" : "ຍັງບໍ່ແກ້ໄຂ"}
+                  </span>
+                </div>
                 <i>{template.pages} ໜ້າ A4</i>
               </button>
             ))}
+            {filteredTemplates.length === 0 ? (
+              <div className="empty-catalog">ບໍ່ພົບແບບຟອມທີ່ກົງກັບຕົວກອງ</div>
+            ) : null}
           </div>
+
+          <section className="font-settings" aria-label="Font ເອກະສານ">
+            <div className="font-settings-heading">
+              <strong>Font ເອກະສານ</strong>
+              <span>ກຳນົດແຍກຕາມພາສາ</span>
+            </div>
+            <label>
+              <span>Font ພາສາລາວ</span>
+              <select value={draft.settings.laoFont} onChange={(event) => updateLaoFont(event.target.value as LaoFontId)}>
+                {LAO_FONTS.map((font) => (
+                  <option key={font.id} value={font.id}>{font.label}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>English Font</span>
+              <select value={draft.settings.englishFont} onChange={(event) => updateEnglishFont(event.target.value as EnglishFontId)}>
+                {ENGLISH_FONTS.map((font) => (
+                  <option key={font.id} value={font.id}>{font.label}</option>
+                ))}
+              </select>
+            </label>
+            <div className="font-preview" style={documentFontStyle}>ຕົວຢ່າງເອກະສານ · English 123</div>
+            <p>ລະບົບຈະເລືອກ Font ອັດຕະໂນມັດຕາມຕົວອັກສອນ ແລະ ບໍ່ປ່ຽນ Font ພາສາລາວເມື່ອປ່ຽນ English Font.</p>
+          </section>
+
           <div className="catalog-tip">
             <strong>ແບບຟອມແຍກກັນ</strong>
             <p>ແຕ່ລະແບບຟອມຖືກບັນທຶກແຍກກັນ. ການປ່ຽນແບບຟອມຈະບໍ່ເຮັດໃຫ້ເນື້ອຫາສູນເສຍ.</p>
@@ -740,9 +928,14 @@ export default function DocumentStudio() {
               <span>ກຳລັງແກ້ໄຂ</span>
               <strong>{selectedTemplate.laoName}</strong>
             </div>
-            <span>{selectedTemplate.pages} ໜ້າ · A4 ແນວຕັ້ງ · Noto Sans Lao</span>
+            <span>{selectedTemplate.pages} ໜ້າ · A4 ແນວຕັ້ງ · {selectedLaoFont.label} + {selectedEnglishFont.label}</span>
           </div>
-          <div className={`document-pages ${editing ? "editing" : "previewing"}`} ref={editorRef} key={`${selectedId}-${revision}`}>
+          <div
+            className={`document-pages ${editing ? "editing" : "previewing"}`}
+            ref={editorRef}
+            key={`${selectedId}-${revision}`}
+            style={documentFontStyle}
+          >
             <TemplateCanvas templateId={selectedId} ctx={editorContext} />
           </div>
         </section>

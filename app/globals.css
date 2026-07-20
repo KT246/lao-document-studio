@@ -1,5 +1,7 @@
 :root {
   --font-lao: "Noto Sans Lao", "Phetsarath OT", sans-serif;
+  --document-lao-font: "Noto Sans Lao";
+  --document-english-font: "Inter";
   --ink: #17202a;
   --muted: #667382;
   --line: #d9dee5;
@@ -265,7 +267,7 @@ input:focus-visible,
 
 .studio-body {
   display: grid;
-  grid-template-columns: 272px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1fr);
   min-height: calc(100vh - 132px);
 }
 
@@ -278,6 +280,78 @@ input:focus-visible,
   padding: 18px 15px;
   border-right: 1px solid #d7dde4;
   background: #f8f9fb;
+}
+
+.catalog-filters {
+  display: grid;
+  gap: 9px;
+  margin-bottom: 15px;
+  padding: 11px;
+  border: 1px solid #d8e0e7;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.catalog-filters label,
+.font-settings label {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.catalog-filters label > span,
+.font-settings label > span {
+  color: #526476;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.catalog-filters input,
+.catalog-filters select,
+.font-settings select {
+  width: 100%;
+  height: 34px;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid #c9d2dc;
+  border-radius: 7px;
+  color: #263b4e;
+  background: #fff;
+  font-size: 10.5px;
+}
+
+.catalog-filters input::placeholder {
+  color: #8b97a3;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.clear-filters {
+  min-height: 34px;
+  align-self: end;
+  padding: 5px 8px;
+  border: 1px solid #cdd6df;
+  border-radius: 7px;
+  color: #41586c;
+  background: #f5f7f9;
+  cursor: pointer;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.clear-filters:hover:not(:disabled) {
+  border-color: #91a3b4;
+  background: #edf2f6;
+}
+
+.clear-filters:disabled {
+  cursor: default;
+  opacity: 0.45;
 }
 
 .catalog-heading {
@@ -304,6 +378,17 @@ input:focus-visible,
 .template-list {
   display: grid;
   gap: 8px;
+}
+
+.empty-catalog {
+  padding: 18px 11px;
+  border: 1px dashed #c9d3dc;
+  border-radius: 8px;
+  color: #71808e;
+  background: #fff;
+  font-size: 10px;
+  line-height: 1.55;
+  text-align: center;
 }
 
 .template-card {
@@ -371,6 +456,27 @@ input:focus-visible,
   -webkit-line-clamp: 2;
 }
 
+.template-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.template-badges span {
+  padding: 2px 5px;
+  border-radius: 999px;
+  color: #586978;
+  background: #edf1f4;
+  font-size: 7.5px;
+  line-height: 1.4;
+}
+
+.template-badges span.is-edited {
+  color: #27624c;
+  background: #e4f2ec;
+}
+
 .template-card i {
   margin-top: 5px;
   color: #496983;
@@ -386,6 +492,54 @@ input:focus-visible,
   border-radius: 8px;
   color: #5c6b79;
   background: #fff;
+}
+
+.font-settings {
+  display: grid;
+  gap: 9px;
+  margin-top: 16px;
+  padding: 11px;
+  border: 1px solid #cad7e1;
+  border-radius: 9px;
+  background: #eef4f8;
+}
+
+.font-settings-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #d4e0e8;
+}
+
+.font-settings-heading strong {
+  color: #2c455a;
+  font-size: 10.5px;
+}
+
+.font-settings-heading span {
+  color: #748391;
+  font-size: 8px;
+}
+
+.font-preview {
+  min-height: 44px;
+  padding: 9px;
+  border: 1px dashed #afbfcc;
+  border-radius: 7px;
+  color: #21384b;
+  background: #fff;
+  font-family: var(--document-english-font), var(--document-lao-font), sans-serif;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.font-settings > p {
+  margin: 0;
+  color: #647482;
+  font-size: 8.5px;
+  line-height: 1.55;
 }
 
 .catalog-tip strong {
@@ -461,7 +615,7 @@ input:focus-visible,
   color: #000;
   background: #fff;
   box-shadow: 0 5px 24px rgba(32, 44, 58, 0.15), 0 1px 2px rgba(32, 44, 58, 0.08);
-  font-family: var(--font-lao);
+  font-family: var(--document-english-font), var(--document-lao-font), sans-serif;
   font-size: 14.5px;
   font-weight: 400;
   line-height: 1.58;
@@ -900,7 +1054,7 @@ input:focus-visible,
 
 @media (max-width: 1120px) {
   .studio-body {
-    grid-template-columns: 230px minmax(0, 1fr);
+    grid-template-columns: 260px minmax(0, 1fr);
   }
 
   .template-catalog {
@@ -1003,6 +1157,10 @@ input:focus-visible,
 
   .template-select-label {
     min-width: 260px;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
   }
 
   .document-pages {
