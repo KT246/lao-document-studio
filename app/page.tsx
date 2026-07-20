@@ -144,6 +144,16 @@ function EditableText({
   const removed = ctx.draft.removedFields.includes(field);
   const isBlock = typeof Tag === "string" && ["div", "p", "h1", "h2", "h3", "h4", "h5", "h6"].includes(Tag);
   const Shell = isBlock ? "div" : "span";
+  const editableValueRef = useRef<HTMLSpanElement>(null);
+  const initialValueRef = useRef(value);
+
+  useLayoutEffect(() => {
+    const element = editableValueRef.current;
+    if (!element || removed) return;
+    const activeElement = document.activeElement;
+    if (activeElement === element || (activeElement && element.contains(activeElement))) return;
+    if (element.innerHTML !== value) element.innerHTML = value;
+  }, [removed, value]);
 
   if (removed && !ctx.editing) return null;
 
@@ -161,6 +171,7 @@ function EditableText({
       ) : (
         <Tag className={`editable ${className}`.trim()}>
           <span
+            ref={editableValueRef}
             className="editable-value"
             contentEditable={ctx.editing}
             data-field={field}
@@ -171,7 +182,7 @@ function EditableText({
               const element = event.currentTarget;
               ctx.onFieldChange(field, element.innerHTML, element.textContent ?? "");
             }}
-            dangerouslySetInnerHTML={{ __html: value }}
+            dangerouslySetInnerHTML={{ __html: initialValueRef.current }}
           />
           {ctx.editing ? (
             <button
@@ -874,7 +885,6 @@ export default function DocumentStudio() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       writeStorage(selectedId);
-      setCatalogRevision((value) => value + 1);
     }, 650);
   }, [selectedId, writeStorage]);
 
