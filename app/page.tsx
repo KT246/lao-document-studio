@@ -380,11 +380,21 @@ function SignatureBlock({ ctx }: { ctx: EditorContext }) {
     <section className="signature-block keep-together">
       <EditableText ctx={ctx} field="signatureRole" html="ຜູ້ອຳນວຍການ" as="div" className="signature-role" />
       <div className="signature-media">
-        <div className="signature-slot stamp-slot">
-          {ctx.draft.assets.stamp ? <img src={ctx.draft.assets.stamp} alt="ກາປະທັບ" /> : <span className="edit-hint">ກາປະທັບ</span>}
-        </div>
-        <div className="signature-slot">
-          {ctx.draft.assets.signature ? <img src={ctx.draft.assets.signature} alt="ລາຍເຊັນ" /> : <span className="edit-hint">ລາຍເຊັນ</span>}
+        <div className="signature-seal-composite">
+          <div className="signature-layer">
+            {ctx.draft.assets.signature ? (
+              <img src={ctx.draft.assets.signature} alt="ລາຍເຊັນ" />
+            ) : (
+              <span className="edit-hint signature-hint">ລາຍເຊັນ</span>
+            )}
+          </div>
+          <div className={`stamp-layer ${ctx.draft.assets.stamp ? "has-stamp" : ""}`.trim()}>
+            {ctx.draft.assets.stamp ? (
+              <img src={ctx.draft.assets.stamp} alt="ກາປະທັບ" />
+            ) : (
+              <span className="edit-hint stamp-hint">ກາປະທັບ</span>
+            )}
+          </div>
         </div>
       </div>
       <EditableText ctx={ctx} field="signerName" html="[ຊື່ ແລະ ນາມສະກຸນ]" as="div" className="signature-name line-value" />
