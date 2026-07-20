@@ -1012,6 +1012,11 @@ export default function DocumentStudio() {
         </div>
       ) : null}
 
+      <div className="powered-by-badge" aria-label="Powered by TJ Group">
+        <span>Powered by</span>
+        <strong>TJ Group</strong>
+      </div>
+
       <input ref={fileInputRef} className="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={uploadAsset} />
       <div className={`toast ${toast ? "show" : ""}`} role="status" aria-live="polite">✓ {toast}</div>
     </main>
