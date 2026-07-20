@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 type TemplateId = "cooperation" | "debt-note" | "quotation";
 type AssetKey = "logo" | "signature" | "stamp";
 type TemplateCategory = "cooperation" | "finance" | "sales";
 type CategoryFilter = "all" | TemplateCategory;
-type PageFilter = "all" | "single" | "multiple";
 type StatusFilter = "all" | "edited" | "blank";
 type LaoFontId = "noto-sans-lao" | "noto-sans-lao-looped" | "noto-serif-lao" | "phetsarath-ot";
 type EnglishFontId = "inter" | "noto-sans" | "lora" | "ibm-plex-sans";
@@ -17,7 +16,6 @@ type TemplateDefinition = {
   description: string;
   code: string;
   category: TemplateCategory;
-  pages: number;
   fileName: string;
 };
 
@@ -38,6 +36,7 @@ type EditorContext = {
   onFieldChange: (field: string, html: string, text: string) => void;
   onRemoveField: (field: string) => void;
   onRestoreField: (field: string) => void;
+  onPageCountChange: (pageCount: number) => void;
 };
 
 const STORAGE_KEY = "lao-document-studio.v1";
@@ -69,7 +68,6 @@ const TEMPLATES: TemplateDefinition[] = [
     description: "ເຊື່ອມຕໍ່ການຊຳລະຜ່ານ Unitel ເບີຂຶ້ນຕົ້ນ 9.",
     code: "COOP",
     category: "cooperation",
-    pages: 3,
     fileName: "Unitel_Business_Cooperation_Proposal.pdf"
   },
   {
@@ -78,7 +76,6 @@ const TEMPLATES: TemplateDefinition[] = [
     description: "ແຈ້ງລາຍການໜີ້, ສາເຫດ ແລະ ກຳນົດຊຳລະ.",
     code: "DEBT",
     category: "finance",
-    pages: 1,
     fileName: "Lao_Debit_Note.pdf"
   },
   {
@@ -87,7 +84,6 @@ const TEMPLATES: TemplateDefinition[] = [
     description: "ສະເໜີລາຄາສິນຄ້າ, ບໍລິການ ແລະ ເງື່ອນໄຂ.",
     code: "QUOTE",
     category: "sales",
-    pages: 1,
     fileName: "Lao_Quotation.pdf"
   }
 ];
@@ -198,6 +194,108 @@ function Paper({ children, label }: { children: React.ReactNode; label: string }
   );
 }
 
+function PaginatedDocument({
+  children,
+  label,
+  onPageCountChange
+}: {
+  children: React.ReactNode;
+  label: string;
+  onPageCountChange: (pageCount: number) => void;
+}) {
+  const blocks = React.Children.toArray(children);
+  const blockRefs = useRef(new Map<number, HTMLDivElement>());
+  const paginationFrameRef = useRef<number | null>(null);
+  const [pages, setPages] = useState<number[][]>(() => [blocks.map((_, index) => index)]);
+
+  const paginate = useCallback(() => {
+    const firstBlock = blockRefs.current.get(0);
+    const contentRoot = firstBlock?.closest<HTMLElement>(".paper-content");
+    const availableHeight = contentRoot?.clientHeight ?? 0;
+    if (!availableHeight || blocks.length === 0) return;
+
+    const nextPages: number[][] = [];
+    let currentPage: number[] = [];
+    let usedHeight = 0;
+
+    blocks.forEach((_, index) => {
+      const element = blockRefs.current.get(index);
+      if (!element) return;
+      const blockHeight = element.getBoundingClientRect().height;
+      if (currentPage.length > 0 && usedHeight + blockHeight > availableHeight + 0.5) {
+        nextPages.push(currentPage);
+        currentPage = [];
+        usedHeight = 0;
+      }
+      currentPage.push(index);
+      usedHeight += blockHeight;
+    });
+
+    if (currentPage.length > 0) nextPages.push(currentPage);
+    if (nextPages.length === 0) nextPages.push([]);
+
+    setPages((currentPages) => {
+      const currentSignature = currentPages.map((page) => page.join(",")).join("|");
+      const nextSignature = nextPages.map((page) => page.join(",")).join("|");
+      return currentSignature === nextSignature ? currentPages : nextPages;
+    });
+  }, [blocks.length]);
+
+  const schedulePagination = useCallback(() => {
+    if (paginationFrameRef.current !== null) cancelAnimationFrame(paginationFrameRef.current);
+    paginationFrameRef.current = requestAnimationFrame(() => {
+      paginationFrameRef.current = null;
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement && activeElement.isContentEditable) return;
+      paginate();
+    });
+  }, [paginate]);
+
+  useEffect(() => {
+    setPages([blocks.map((_, index) => index)]);
+  }, [blocks.length]);
+
+  useEffect(() => {
+    onPageCountChange(pages.length);
+  }, [onPageCountChange, pages.length]);
+
+  useLayoutEffect(() => {
+    schedulePagination();
+    const observer = new ResizeObserver(schedulePagination);
+    blockRefs.current.forEach((element) => observer.observe(element));
+    void document.fonts?.ready.then(schedulePagination);
+    return () => {
+      observer.disconnect();
+      if (paginationFrameRef.current !== null) cancelAnimationFrame(paginationFrameRef.current);
+    };
+  });
+
+  return (
+    <div className="auto-paginated-document" onBlurCapture={() => window.setTimeout(schedulePagination, 0)}>
+      {pages.map((page, pageIndex) => (
+        <Paper key={pageIndex} label={`${label} — ໜ້າ ${pageIndex + 1}`}>
+          {page.map((blockIndex) => {
+            const block = blocks[blockIndex];
+            const blockKey = React.isValidElement(block) && block.key !== null ? block.key : blockIndex;
+            return (
+              <div
+                className="auto-page-block"
+                key={blockKey}
+                ref={(element) => {
+                  if (element) blockRefs.current.set(blockIndex, element);
+                  else blockRefs.current.delete(blockIndex);
+                }}
+              >
+                {block}
+              </div>
+            );
+          })}
+        </Paper>
+      ))}
+    </div>
+  );
+}
+
 function NationalHeader({ ctx }: { ctx: EditorContext }) {
   return (
     <header className="national-header keep-together">
@@ -287,8 +385,7 @@ function SignatureBlock({ ctx }: { ctx: EditorContext }) {
 
 function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
   return (
-    <>
-      <Paper label="ໜ້າ 1 — ໃບສະເໜີຮ່ວມມື">
+    <PaginatedDocument label="ໃບສະເໜີຮ່ວມມື" onPageCountChange={ctx.onPageCountChange}>
         <NationalHeader ctx={ctx} />
         <CompanyHeader ctx={ctx} />
         <DocumentTitle
@@ -320,9 +417,6 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
           html="ລະບົບຂອງບໍລິສັດອະນຸຍາດໃຫ້ລູກຄ້າເຕີມເຄຣດິດເຂົ້າບັນຊີພາຍໃນເວັບໄຊ ແລະ ນຳເຄຣດິດໄປຊື້ເກມ, ແພັກເກດ, ສິນຄ້າ ແລະ ບໍລິການດິຈິຕອນພາຍໃນລະບົບ."
           as="p"
         />
-      </Paper>
-
-      <Paper label="ໜ້າ 2 — ຂໍ້ສະເໜີຮ່ວມມື">
         <EditableText ctx={ctx} field="proposalHeading" html="2. ຂໍ້ສະເໜີຮ່ວມມື" as="h2" className="section-heading top-heading" />
         <EditableText
           ctx={ctx}
@@ -369,9 +463,6 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
             </div>
           ))}
         </div>
-      </Paper>
-
-      <Paper label="ໜ້າ 3 — ລາຍເຊັນ ແລະ ເອກະສານຄັດຕິດ">
         <EditableText ctx={ctx} field="conclusionHeading" html="5. ສະຫຼຸບ" as="h2" className="section-heading top-heading" />
         <EditableText ctx={ctx} field="conclusion1" html="ດັ່ງນັ້ນ, ຈຶ່ງຮຽນສະເໜີມາຍັງທ່ານ ເພື່ອຄົ້ນຄວ້າ ແລະ ພິຈາລະນາຕາມເຫັນສົມຄວນດ້ວຍ." as="p" />
         <EditableText ctx={ctx} field="conclusion2" html="ຮຽນມາດ້ວຍຄວາມເຄົາລົບຢ່າງສູງ." as="p" />
@@ -393,14 +484,13 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
             </div>
           ))}
         </div>
-      </Paper>
-    </>
+    </PaginatedDocument>
   );
 }
 
 function DebtNoteTemplate({ ctx }: { ctx: EditorContext }) {
   return (
-    <Paper label="ໃບແຈ້ງໜີ້">
+    <PaginatedDocument label="ໃບແຈ້ງໜີ້" onPageCountChange={ctx.onPageCountChange}>
       <NationalHeader ctx={ctx} />
       <CompanyHeader ctx={ctx} compact />
       <DocumentTitle ctx={ctx} title="ໃບແຈ້ງໜີ້" subtitle="DEBIT NOTE" />
@@ -444,13 +534,13 @@ function DebtNoteTemplate({ ctx }: { ctx: EditorContext }) {
         <div><EditableText ctx={ctx} field="accountNameLabel" html="<strong>ຊື່ບັນຊີ:</strong>" /> <EditableText ctx={ctx} field="accountName" html="[ຊື່ບັນຊີ]" /></div>
       </section>
       <SignatureBlock ctx={ctx} />
-    </Paper>
+    </PaginatedDocument>
   );
 }
 
 function QuotationTemplate({ ctx }: { ctx: EditorContext }) {
   return (
-    <Paper label="ໃບສະເໜີລາຄາ">
+    <PaginatedDocument label="ໃບສະເໜີລາຄາ" onPageCountChange={ctx.onPageCountChange}>
       <NationalHeader ctx={ctx} />
       <CompanyHeader ctx={ctx} compact />
       <DocumentTitle ctx={ctx} title="ໃບສະເໜີລາຄາ" subtitle="QUOTATION" />
@@ -494,7 +584,7 @@ function QuotationTemplate({ ctx }: { ctx: EditorContext }) {
         <EditableText ctx={ctx} field="quoteNote" html="4. <strong>ໝາຍເຫດ:</strong> ................................" as="div" />
       </section>
       <SignatureBlock ctx={ctx} />
-    </Paper>
+    </PaginatedDocument>
   );
 }
 
@@ -526,6 +616,7 @@ async function waitForDocumentAssets(root: HTMLElement) {
 export default function DocumentStudio() {
   const [selectedId, setSelectedId] = useState<TemplateId>("cooperation");
   const [editing, setEditing] = useState(true);
+  const [documentPageCount, setDocumentPageCount] = useState(1);
   const [revision, setRevision] = useState(0);
   const [catalogRevision, setCatalogRevision] = useState(0);
   const [toast, setToast] = useState("");
@@ -533,7 +624,6 @@ export default function DocumentStudio() {
   const [downloadConfirmationOpen, setDownloadConfirmationOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
-  const [pageFilter, setPageFilter] = useState<PageFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const draftsRef = useRef<Record<TemplateId, DocumentDraft>>(createDraftCollection());
   const editorRef = useRef<HTMLDivElement>(null);
@@ -564,18 +654,15 @@ export default function DocumentStudio() {
       const matchesQuery = !normalizedQuery || [template.laoName, template.description, template.code, categoryLabel]
         .some((value) => value.toLocaleLowerCase("lo-LA").includes(normalizedQuery));
       const matchesCategory = categoryFilter === "all" || template.category === categoryFilter;
-      const matchesPages = pageFilter === "all"
-        || (pageFilter === "single" ? template.pages === 1 : template.pages > 1);
       const edited = hasDraftChanges(draftsRef.current[template.id]);
       const matchesStatus = statusFilter === "all"
         || (statusFilter === "edited" ? edited : !edited);
-      return matchesQuery && matchesCategory && matchesPages && matchesStatus;
+      return matchesQuery && matchesCategory && matchesStatus;
     });
-  }, [catalogRevision, categoryFilter, pageFilter, revision, searchQuery, statusFilter]);
+  }, [catalogRevision, categoryFilter, revision, searchQuery, statusFilter]);
 
   const filtersActive = Boolean(searchQuery)
     || categoryFilter !== "all"
-    || pageFilter !== "all"
     || statusFilter !== "all";
   const templateOptions = filtersActive
     ? (filteredTemplates.length > 0 ? filteredTemplates : [selectedTemplate])
@@ -712,6 +799,7 @@ export default function DocumentStudio() {
   const selectTemplate = useCallback((nextId: TemplateId) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     writeStorage(nextId);
+    setDocumentPageCount(1);
     setSelectedId(nextId);
     setRevision((value) => value + 1);
   }, [writeStorage]);
@@ -740,7 +828,6 @@ export default function DocumentStudio() {
   const clearFilters = () => {
     setSearchQuery("");
     setCategoryFilter("all");
-    setPageFilter("all");
     setStatusFilter("all");
   };
 
@@ -864,7 +951,8 @@ export default function DocumentStudio() {
     editing,
     onFieldChange: handleFieldChange,
     onRemoveField: removeField,
-    onRestoreField: restoreField
+    onRestoreField: restoreField,
+    onPageCountChange: setDocumentPageCount
   };
 
   return (
@@ -977,14 +1065,6 @@ export default function DocumentStudio() {
                   <option value="blank">ຍັງບໍ່ໄດ້ແກ້ໄຂ</option>
                 </select>
               </label>
-              <label>
-                <span>ຈຳນວນໜ້າ</span>
-                <select value={pageFilter} onChange={(event) => setPageFilter(event.target.value as PageFilter)}>
-                  <option value="all">ທັງໝົດ</option>
-                  <option value="single">1 ໜ້າ</option>
-                  <option value="multiple">2+ ໜ້າ</option>
-                </select>
-              </label>
               <button type="button" className="clear-filters" disabled={!filtersActive} onClick={clearFilters}>↺ ລ້າງຕົວກອງ</button>
             </div>
             {filtersActive && filteredTemplates.length === 0 ? (
@@ -1029,12 +1109,12 @@ export default function DocumentStudio() {
               <span>ກຳລັງແກ້ໄຂ</span>
               <strong>{selectedTemplate.laoName}</strong>
             </div>
-            <span>{selectedTemplate.pages} ໜ້າ · A4 ແນວຕັ້ງ · {selectedLaoFont.label} + {selectedEnglishFont.label}</span>
+            <span>{documentPageCount} ໜ້າ · A4 ແນວຕັ້ງ · {selectedLaoFont.label} + {selectedEnglishFont.label}</span>
           </div>
           <div
             className={`document-pages ${editing ? "editing" : "previewing"}`}
             ref={editorRef}
-            key={`${selectedId}-${revision}`}
+            key={selectedId}
             style={documentFontStyle}
           >
             <TemplateCanvas templateId={selectedId} ctx={editorContext} />

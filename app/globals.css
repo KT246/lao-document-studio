@@ -511,6 +511,17 @@ input:focus-visible,
   transform-origin: top center;
 }
 
+.auto-paginated-document {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.auto-page-block {
+  display: flow-root;
+}
+
 .paper {
   position: relative;
   width: var(--paper-width);
@@ -1379,6 +1390,12 @@ input:focus-visible,
     zoom: 1 !important;
   }
 
+  .auto-paginated-document {
+    display: block !important;
+    width: 210mm !important;
+    gap: 0 !important;
+  }
+
   .paper {
     width: 210mm !important;
     height: 297mm !important;
@@ -1405,6 +1422,10 @@ input:focus-visible,
 .exporting-document .document-pages {
   gap: 0 !important;
   zoom: 1 !important;
+}
+
+.exporting-document .auto-paginated-document {
+  gap: 0 !important;
 }
 
 .exporting-document .paper {
