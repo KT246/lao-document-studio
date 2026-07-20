@@ -897,6 +897,83 @@ input:focus-visible,
   overflow-wrap: anywhere;
 }
 
+.editable-shell {
+  position: relative;
+}
+
+.editable-shell.is-inline {
+  display: inline-flex;
+  align-items: baseline;
+  max-width: 100%;
+}
+
+.editable-shell.is-block {
+  display: block;
+}
+
+.editable-field-remove {
+  position: absolute;
+  z-index: 8;
+  top: -8px;
+  right: -9px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #d7a5a5;
+  border-radius: 50%;
+  color: #9d3131;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(66, 25, 25, 0.18);
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.86);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.editable-shell:hover > .editable-field-remove,
+.editable-shell:focus-within > .editable-field-remove {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+.editable-shell.is-removed {
+  min-width: 28px;
+  min-height: 24px;
+  margin: 2px 0;
+  padding: 2px;
+  border: 1px dashed #b9c7d2;
+  border-radius: 5px;
+  background: rgba(241, 246, 249, 0.76);
+}
+
+.editable-shell.is-block.is-removed {
+  display: block;
+}
+
+.editable-field-restore {
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 0;
+  border-radius: 4px;
+  color: #365f7d;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-lao);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.editable-field-restore:hover {
+  background: var(--navy-soft);
+}
+
 .document-pages.editing .editable[contenteditable="true"] {
   outline: 1px solid transparent;
   outline-offset: 2px;
@@ -920,6 +997,17 @@ input:focus-visible,
 .document-pages.previewing .editable:empty::before,
 .exporting-document .editable:empty::before {
   content: "";
+}
+
+.document-pages.previewing .editable-field-remove,
+.document-pages.previewing .editable-field-restore,
+.exporting-document .editable-field-remove,
+.exporting-document .editable-field-restore {
+  display: none !important;
+}
+
+.exporting-document .editable-shell.is-removed {
+  display: none !important;
 }
 
 .document-pages.previewing .editable,

@@ -23,6 +23,7 @@ type TemplateDefinition = {
 
 type DocumentDraft = {
   fields: Record<string, string>;
+  removedFields: string[];
   assets: Partial<Record<AssetKey, string>>;
   settings: {
     logoWidth: number;
@@ -35,6 +36,8 @@ type EditorContext = {
   draft: DocumentDraft;
   editing: boolean;
   onFieldChange: (field: string, html: string, text: string) => void;
+  onRemoveField: (field: string) => void;
+  onRestoreField: (field: string) => void;
 };
 
 const STORAGE_KEY = "lao-document-studio.v1";
@@ -92,6 +95,7 @@ const TEMPLATES: TemplateDefinition[] = [
 function createDraft(): DocumentDraft {
   return {
     fields: {},
+    removedFields: [],
     assets: {},
     settings: {
       logoWidth: 92,
@@ -111,6 +115,7 @@ function createDraftCollection(): Record<TemplateId, DocumentDraft> {
 
 function hasDraftChanges(draft: DocumentDraft) {
   return Object.keys(draft.fields).length > 0
+    || draft.removedFields.length > 0
     || Object.values(draft.assets).some(Boolean)
     || draft.settings.logoWidth !== 92
     || draft.settings.laoFont !== "noto-sans-lao"
@@ -135,21 +140,53 @@ function EditableText({
   placeholder = "ພິມເນື້ອຫາ..."
 }: EditableTextProps) {
   const value = ctx.draft.fields[field] ?? html;
+  const removed = ctx.draft.removedFields.includes(field);
+  const isBlock = typeof Tag === "string" && ["div", "p", "h1", "h2", "h3", "h4", "h5", "h6"].includes(Tag);
+  const Shell = isBlock ? "div" : "span";
+
+  if (removed && !ctx.editing) return null;
 
   return (
-    <Tag
-      className={`editable ${className}`.trim()}
-      contentEditable={ctx.editing}
-      data-field={field}
-      data-placeholder={placeholder}
-      suppressContentEditableWarning
-      spellCheck={false}
-      onInput={(event: React.FormEvent<HTMLElement>) => {
-        const element = event.currentTarget;
-        ctx.onFieldChange(field, element.innerHTML, element.textContent ?? "");
-      }}
-      dangerouslySetInnerHTML={{ __html: value }}
-    />
+    <Shell className={`editable-shell ${isBlock ? "is-block" : "is-inline"} ${removed ? "is-removed" : ""}`.trim()}>
+      {removed ? (
+        <button
+          type="button"
+          className="editable-field-restore"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => ctx.onRestoreField(field)}
+        >
+          ＋ ເພີ່ມຄືນ
+        </button>
+      ) : (
+        <>
+          <Tag
+            className={`editable ${className}`.trim()}
+            contentEditable={ctx.editing}
+            data-field={field}
+            data-placeholder={placeholder}
+            suppressContentEditableWarning
+            spellCheck={false}
+            onInput={(event: React.FormEvent<HTMLElement>) => {
+              const element = event.currentTarget;
+              ctx.onFieldChange(field, element.innerHTML, element.textContent ?? "");
+            }}
+            dangerouslySetInnerHTML={{ __html: value }}
+          />
+          {ctx.editing ? (
+            <button
+              type="button"
+              className="editable-field-remove"
+              aria-label="ລຶບຂໍ້ຄວາມສ່ວນນີ້"
+              title="ລຶບຂໍ້ຄວາມສ່ວນນີ້"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => ctx.onRemoveField(field)}
+            >
+              ×
+            </button>
+          ) : null}
+        </>
+      )}
+    </Shell>
   );
 }
 
@@ -610,6 +647,7 @@ export default function DocumentStudio() {
             if (stored) {
               nextDrafts[id] = {
                 fields: stored.fields ?? {},
+                removedFields: Array.isArray(stored.removedFields) ? stored.removedFields : [],
                 assets: stored.assets ?? {},
                 settings: {
                   logoWidth: stored.settings?.logoWidth ?? 92,
@@ -733,6 +771,24 @@ export default function DocumentStudio() {
     showToast("ລຶບຮູບອອກແລ້ວ");
   };
 
+  const removeField = useCallback((field: string) => {
+    const activeDraft = draftsRef.current[selectedId];
+    if (!activeDraft.removedFields.includes(field)) activeDraft.removedFields.push(field);
+    setRevision((value) => value + 1);
+    setCatalogRevision((value) => value + 1);
+    writeStorage(selectedId);
+    showToast("ລຶບສ່ວນຂໍ້ຄວາມແລ້ວ");
+  }, [selectedId, showToast, writeStorage]);
+
+  const restoreField = useCallback((field: string) => {
+    const activeDraft = draftsRef.current[selectedId];
+    activeDraft.removedFields = activeDraft.removedFields.filter((removedField) => removedField !== field);
+    setRevision((value) => value + 1);
+    setCatalogRevision((value) => value + 1);
+    writeStorage(selectedId);
+    showToast("ເພີ່ມສ່ວນຂໍ້ຄວາມຄືນແລ້ວ");
+  }, [selectedId, showToast, writeStorage]);
+
   const uploadAsset = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -806,7 +862,9 @@ export default function DocumentStudio() {
   const editorContext: EditorContext = {
     draft,
     editing,
-    onFieldChange: handleFieldChange
+    onFieldChange: handleFieldChange,
+    onRemoveField: removeField,
+    onRestoreField: restoreField
   };
 
   return (
@@ -961,7 +1019,7 @@ export default function DocumentStudio() {
 
           <div className="catalog-tip">
             <strong>ແບບຟອມເປັນພຽງຈຸດເລີ່ມຕົ້ນ</strong>
-            <p>ກົດໃສ່ຂໍ້ຄວາມໃດກໍໄດ້ເພື່ອແກ້ໄຂ ຫຼື ລຶບໃຫ້ຫວ່າງ. ແຕ່ລະແບບຟອມຈະບັນທຶກແຍກກັນ.</p>
+            <p>ກົດໃສ່ຂໍ້ຄວາມເພື່ອແກ້ໄຂ, ກົດ × ເພື່ອລຶບ ແລະ ກົດ ＋ ເພື່ອເພີ່ມຄືນ. ແຕ່ລະແບບຟອມຈະບັນທຶກແຍກກັນ.</p>
           </div>
         </aside>
 
