@@ -186,10 +186,21 @@ function EditableText({
   );
 }
 
-function Paper({ children, label }: { children: React.ReactNode; label: string }) {
+function Paper({
+  children,
+  label,
+  official = false,
+  pageNumber
+}: {
+  children: React.ReactNode;
+  label: string;
+  official?: boolean;
+  pageNumber?: number;
+}) {
   return (
-    <section className="paper" aria-label={label}>
+    <section className={`paper ${official ? "official-paper" : ""}`.trim()} aria-label={label}>
       <div className="paper-content">{children}</div>
+      {official ? <footer className="official-page-number">{pageNumber}</footer> : null}
     </section>
   );
 }
@@ -197,10 +208,12 @@ function Paper({ children, label }: { children: React.ReactNode; label: string }
 function PaginatedDocument({
   children,
   label,
+  official = false,
   onPageCountChange
 }: {
   children: React.ReactNode;
   label: string;
+  official?: boolean;
   onPageCountChange: (pageCount: number) => void;
 }) {
   const blocks = React.Children.toArray(children);
@@ -273,7 +286,12 @@ function PaginatedDocument({
   return (
     <div className="auto-paginated-document" onBlurCapture={() => window.setTimeout(schedulePagination, 0)}>
       {pages.map((page, pageIndex) => (
-        <Paper key={pageIndex} label={`${label} — ໜ້າ ${pageIndex + 1}`}>
+        <Paper
+          key={pageIndex}
+          label={`${label} — ໜ້າ ${pageIndex + 1}`}
+          official={official}
+          pageNumber={pageIndex + 1}
+        >
           {page.map((blockIndex) => {
             const block = blocks[blockIndex];
             const blockKey = React.isValidElement(block) && block.key !== null ? block.key : blockIndex;
@@ -296,30 +314,65 @@ function PaginatedDocument({
   );
 }
 
-function NationalHeader({ ctx }: { ctx: EditorContext }) {
+function OfficialLaoHeader({ ctx }: { ctx: EditorContext }) {
   return (
-    <header className="national-header keep-together">
-      <EditableText
-        ctx={ctx}
-        field="nationalTitle"
-        html="ສາທາລະນະລັດ ປະຊາທິປະໄຕ ປະຊາຊົນລາວ"
-        as="div"
-        className="national-title"
-      />
-      <EditableText
-        ctx={ctx}
-        field="nationalMotto"
-        html="ສັນຕິພາບ ເອກະລາດ ປະຊາທິປະໄຕ ເອກະພາບ ວັດທະນະຖາວອນ"
-        as="div"
-        className="national-motto"
-      />
-      <EditableText
-        ctx={ctx}
-        field="nationalDivider"
-        html="──────────── ວ ວ ────────────"
-        as="div"
-        className="national-divider"
-      />
+    <header className="official-lao-header keep-together">
+      <div className="official-header-top">
+        <div className="official-issuer">
+          <EditableText
+            ctx={ctx}
+            field="officialIssuerName"
+            html="ບໍລິສັດ [ຊື່ບໍລິສັດ]"
+            as="div"
+            className="official-issuer-name"
+          />
+          <EditableText
+            ctx={ctx}
+            field="officialIssuerOffice"
+            html="[ພະແນກ / ຫ້ອງການ]"
+            as="div"
+          />
+          <EditableText
+            ctx={ctx}
+            field="issuedBy"
+            html="<strong>ອອກໃຫ້ໂດຍ:</strong> TJ Group<br><strong>Issued by:</strong> TJ Group"
+            as="div"
+            className="official-issued-by"
+          />
+        </div>
+        <img
+          className="official-national-emblem"
+          src="/lao-national-emblem.png"
+          alt="ເຄື່ອງໝາຍຊາດ ສປປ ລາວ"
+        />
+      </div>
+      <div className="official-national-copy">
+        <EditableText
+          ctx={ctx}
+          field="nationalTitle"
+          html="ສາທາລະນະລັດ ປະຊາທິປະໄຕ ປະຊາຊົນລາວ"
+          as="div"
+          className="national-title"
+        />
+        <EditableText
+          ctx={ctx}
+          field="nationalMotto"
+          html="ສັນຕິພາບ ເອກະລາດ ປະຊາທິປະໄຕ ເອກະພາບ ວັດທະນະຖາວອນ"
+          as="div"
+          className="national-motto"
+        />
+      </div>
+      <div className="official-document-meta">
+        <div>
+          <EditableText ctx={ctx} field="documentNumberLabel" html="ເລກທີ:" />{" "}
+          <EditableText ctx={ctx} field="documentNumber" html="...../....." className="official-line-value" />
+        </div>
+        <div>
+          <EditableText ctx={ctx} field="documentPlace" html="ນະຄອນຫຼວງວຽງຈັນ" />,
+          {" "}<EditableText ctx={ctx} field="documentDateLabel" html="ວັນທີ" />{" "}
+          <EditableText ctx={ctx} field="documentDate" html="..... ເດືອນ ..... ປີ ......" className="official-line-value" />
+        </div>
+      </div>
     </header>
   );
 }
@@ -385,9 +438,8 @@ function SignatureBlock({ ctx }: { ctx: EditorContext }) {
 
 function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
   return (
-    <PaginatedDocument label="ໃບສະເໜີຮ່ວມມື" onPageCountChange={ctx.onPageCountChange}>
-        <NationalHeader ctx={ctx} />
-        <CompanyHeader ctx={ctx} />
+    <PaginatedDocument label="ໃບສະເໜີຮ່ວມມື" official onPageCountChange={ctx.onPageCountChange}>
+        <OfficialLaoHeader ctx={ctx} />
         <DocumentTitle
           ctx={ctx}
           title="ໃບສະເໜີຂໍຮ່ວມມືທາງທຸລະກິດ"
@@ -491,7 +543,6 @@ function CooperationTemplate({ ctx }: { ctx: EditorContext }) {
 function DebtNoteTemplate({ ctx }: { ctx: EditorContext }) {
   return (
     <PaginatedDocument label="ໃບແຈ້ງໜີ້" onPageCountChange={ctx.onPageCountChange}>
-      <NationalHeader ctx={ctx} />
       <CompanyHeader ctx={ctx} compact />
       <DocumentTitle ctx={ctx} title="ໃບແຈ້ງໜີ້" subtitle="DEBIT NOTE" />
       <div className="two-column-details keep-together">
@@ -541,7 +592,6 @@ function DebtNoteTemplate({ ctx }: { ctx: EditorContext }) {
 function QuotationTemplate({ ctx }: { ctx: EditorContext }) {
   return (
     <PaginatedDocument label="ໃບສະເໜີລາຄາ" onPageCountChange={ctx.onPageCountChange}>
-      <NationalHeader ctx={ctx} />
       <CompanyHeader ctx={ctx} compact />
       <DocumentTitle ctx={ctx} title="ໃບສະເໜີລາຄາ" subtitle="QUOTATION" />
       <div className="two-column-details keep-together">
