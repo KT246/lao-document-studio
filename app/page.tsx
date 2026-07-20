@@ -154,15 +154,15 @@ function EditableText({
           ＋ ເພີ່ມຄືນ
         </button>
       ) : (
-        <>
-          <Tag
-            className={`editable ${className}`.trim()}
+        <Tag className={`editable ${className}`.trim()}>
+          <span
+            className="editable-value"
             contentEditable={ctx.editing}
             data-field={field}
             data-placeholder={placeholder}
             suppressContentEditableWarning
             spellCheck={false}
-            onInput={(event: React.FormEvent<HTMLElement>) => {
+            onInput={(event: React.FormEvent<HTMLSpanElement>) => {
               const element = event.currentTarget;
               ctx.onFieldChange(field, element.innerHTML, element.textContent ?? "");
             }}
@@ -180,7 +180,7 @@ function EditableText({
               ×
             </button>
           ) : null}
-        </>
+        </Tag>
       )}
     </Shell>
   );

@@ -903,6 +903,10 @@ input:focus-visible,
 }
 
 .editable {
+  position: relative;
+}
+
+.editable-value {
   min-width: 2px;
   border-radius: 2px;
   overflow-wrap: anywhere;
@@ -923,14 +927,12 @@ input:focus-visible,
 }
 
 .editable-field-remove {
-  position: absolute;
-  z-index: 8;
-  top: -8px;
-  right: -9px;
-  display: grid;
-  width: 18px;
-  height: 18px;
+  display: inline-grid;
+  width: 17px;
+  height: 17px;
+  margin-inline-start: 4px;
   padding: 0;
+  vertical-align: middle;
   place-items: center;
   border: 1px solid #d7a5a5;
   border-radius: 50%;
@@ -947,8 +949,8 @@ input:focus-visible,
   transition: opacity 120ms ease, transform 120ms ease;
 }
 
-.editable-shell:hover > .editable-field-remove,
-.editable-shell:focus-within > .editable-field-remove {
+.editable:hover > .editable-field-remove,
+.editable:focus-within > .editable-field-remove {
   opacity: 1;
   pointer-events: auto;
   transform: scale(1);
@@ -985,28 +987,28 @@ input:focus-visible,
   background: var(--navy-soft);
 }
 
-.document-pages.editing .editable[contenteditable="true"] {
+.document-pages.editing .editable-value[contenteditable="true"] {
   outline: 1px solid transparent;
   outline-offset: 2px;
 }
 
-.document-pages.editing .editable[contenteditable="true"]:hover {
+.document-pages.editing .editable-value[contenteditable="true"]:hover {
   outline-color: rgba(50, 103, 145, 0.3);
   background: rgba(232, 241, 248, 0.42);
 }
 
-.document-pages.editing .editable[contenteditable="true"]:focus {
+.document-pages.editing .editable-value[contenteditable="true"]:focus {
   outline: 2px solid rgba(42, 100, 145, 0.52);
   background: rgba(232, 241, 248, 0.56);
 }
 
-.editable:empty::before {
+.editable-value:empty::before {
   color: #929292;
   content: attr(data-placeholder);
 }
 
-.document-pages.previewing .editable:empty::before,
-.exporting-document .editable:empty::before {
+.document-pages.previewing .editable-value:empty::before,
+.exporting-document .editable-value:empty::before {
   content: "";
 }
 
