@@ -188,6 +188,14 @@ function EditableText({
               const element = event.currentTarget;
               ctx.onFieldChange(field, element.innerHTML, element.textContent ?? "");
             }}
+            onBlur={(event: React.FocusEvent<HTMLSpanElement>) => {
+              const element = event.currentTarget;
+              ctx.onFieldChange(field, element.innerHTML, element.textContent ?? "");
+            }}
+            onCompositionEnd={(event: React.CompositionEvent<HTMLSpanElement>) => {
+              const element = event.currentTarget;
+              ctx.onFieldChange(field, element.innerHTML, element.textContent ?? "");
+            }}
             onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
               if (event.key !== "Enter") return;
               event.preventDefault();
@@ -940,6 +948,14 @@ export default function DocumentStudio() {
     scheduleSave();
   }, [scheduleSave, selectedId]);
 
+  const commitFocusedField = useCallback(() => {
+    const element = document.activeElement;
+    if (!(element instanceof HTMLElement) || !editorRef.current?.contains(element)) return;
+    const field = element.dataset.field;
+    if (!field) return;
+    handleFieldChange(field, element.innerHTML, element.textContent ?? "");
+  }, [handleFieldChange]);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -1191,6 +1207,19 @@ export default function DocumentStudio() {
     showToast("ຄືນຄ່າແບບຟອມແລ້ວ");
   };
 
+  const showDocumentPreview = () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    writeStorage(selectedId);
+    setEditing(false);
+    setRevision((value) => value + 1);
+  };
+
+  const saveCurrentDocument = () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    writeStorage(selectedId, true);
+    setRevision((value) => value + 1);
+  };
+
   const printDocument = async () => {
     if (!editorRef.current) return;
     document.body.classList.add("exporting-document");
@@ -1276,7 +1305,13 @@ export default function DocumentStudio() {
         <div className="toolbar-divider" />
         <div className="toolbar-group">
           <button className={editing ? "active" : ""} onClick={() => setEditing(true)}>✎ ແກ້ໄຂ</button>
-          <button className={!editing ? "active" : ""} onClick={() => setEditing(false)}>◉ ເບິ່ງຕົວຢ່າງ</button>
+          <button
+            className={!editing ? "active" : ""}
+            onPointerDown={commitFocusedField}
+            onClick={showDocumentPreview}
+          >
+            ◉ ເບິ່ງຕົວຢ່າງ
+          </button>
         </div>
         <div className="toolbar-divider" />
         <div className="toolbar-group format-tools">
@@ -1325,7 +1360,7 @@ export default function DocumentStudio() {
         </div>
         <div className="toolbar-divider" />
         <div className="toolbar-group toolbar-actions">
-          <button onClick={() => writeStorage(selectedId, true)}>▣ ບັນທຶກ</button>
+          <button onPointerDown={commitFocusedField} onClick={saveCurrentDocument}>▣ ບັນທຶກ</button>
           <button
             className="primary"
             disabled={exporting}
