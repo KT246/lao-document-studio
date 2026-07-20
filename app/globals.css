@@ -787,7 +787,7 @@ input:focus-visible,
 
 .signature-seal-composite {
   position: relative;
-  width: 116px;
+  width: 159px;
   height: 108px;
 }
 
@@ -801,13 +801,22 @@ input:focus-visible,
 
 .signature-layer {
   z-index: 1;
+  top: 0;
+  right: auto;
+  bottom: 0;
+  left: 47px;
+  width: 112px;
 }
 
 .stamp-layer {
   z-index: 2;
+  top: 7px;
+  right: auto;
+  bottom: auto;
+  left: 0;
   width: 94px;
   height: 94px;
-  margin: auto;
+  margin: 0;
   overflow: hidden;
   border: 1.5px dashed #7d858c;
   border-radius: 50%;
@@ -832,8 +841,8 @@ input:focus-visible,
 
 .signature-layer img {
   display: block;
-  width: 88px;
-  max-width: 88px;
+  width: 108px;
+  max-width: 108px;
   max-height: 44px;
   object-fit: contain;
 }
@@ -846,7 +855,7 @@ input:focus-visible,
 }
 
 .signature-layer .signature-hint {
-  width: 82px;
+  width: 108px;
   height: 30px;
 }
 
