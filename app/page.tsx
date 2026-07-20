@@ -380,11 +380,11 @@ function SignatureBlock({ ctx }: { ctx: EditorContext }) {
     <section className="signature-block keep-together">
       <EditableText ctx={ctx} field="signatureRole" html="ຜູ້ອຳນວຍການ" as="div" className="signature-role" />
       <div className="signature-media">
-        <div className="signature-slot">
-          {ctx.draft.assets.signature ? <img src={ctx.draft.assets.signature} alt="ລາຍເຊັນ" /> : <span className="edit-hint">ລາຍເຊັນ</span>}
-        </div>
         <div className="signature-slot stamp-slot">
           {ctx.draft.assets.stamp ? <img src={ctx.draft.assets.stamp} alt="ກາປະທັບ" /> : <span className="edit-hint">ກາປະທັບ</span>}
+        </div>
+        <div className="signature-slot">
+          {ctx.draft.assets.signature ? <img src={ctx.draft.assets.signature} alt="ລາຍເຊັນ" /> : <span className="edit-hint">ລາຍເຊັນ</span>}
         </div>
       </div>
       <EditableText ctx={ctx} field="signerName" html="[ຊື່ ແລະ ນາມສະກຸນ]" as="div" className="signature-name line-value" />
@@ -1028,12 +1028,12 @@ export default function DocumentStudio() {
             {draft.assets.logo ? <button className="remove-asset" aria-label="ລຶບ Logo" title="ລຶບ Logo" onClick={() => removeAsset("logo")}>×</button> : null}
           </div>
           <div className="asset-control">
-            <button onClick={() => chooseAsset("signature")}>⌁ ລາຍເຊັນ</button>
-            {draft.assets.signature ? <button className="remove-asset" aria-label="ລຶບລາຍເຊັນ" title="ລຶບລາຍເຊັນ" onClick={() => removeAsset("signature")}>×</button> : null}
-          </div>
-          <div className="asset-control">
             <button onClick={() => chooseAsset("stamp")}>◎ ກາປະທັບ</button>
             {draft.assets.stamp ? <button className="remove-asset" aria-label="ລຶບກາປະທັບ" title="ລຶບກາປະທັບ" onClick={() => removeAsset("stamp")}>×</button> : null}
+          </div>
+          <div className="asset-control">
+            <button onClick={() => chooseAsset("signature")}>⌁ ລາຍເຊັນ</button>
+            {draft.assets.signature ? <button className="remove-asset" aria-label="ລຶບລາຍເຊັນ" title="ລຶບລາຍເຊັນ" onClick={() => removeAsset("signature")}>×</button> : null}
           </div>
           <label className="logo-size-control">ຂະໜາດ Logo <input type="range" min="56" max="150" value={draft.settings.logoWidth} onChange={(event) => {
             draftsRef.current[selectedId].settings.logoWidth = Number(event.target.value);
