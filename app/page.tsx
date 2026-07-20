@@ -41,6 +41,8 @@ type EditorContext = {
 };
 
 const STORAGE_KEY = "lao-document-studio.v1";
+const DEFAULT_ISSUED_BY = "<strong>ອອກໃຫ້ໂດຍ:</strong> TJ Group";
+const LEGACY_ISSUED_BY = `${DEFAULT_ISSUED_BY}<br><strong>Issued by:</strong> TJ Group`;
 
 const TEMPLATE_CATEGORIES: Array<{ id: TemplateCategory; label: string }> = [
   { id: "cooperation", label: "ການຮ່ວມມື" },
@@ -357,7 +359,7 @@ function CompanyHeader({ ctx, compact = false }: { ctx: EditorContext; compact?:
         <EditableText
           ctx={ctx}
           field="issuedBy"
-          html="<strong>ອອກໃຫ້ໂດຍ:</strong> TJ Group<br><strong>Issued by:</strong> TJ Group"
+          html={DEFAULT_ISSUED_BY}
           as="div"
           className="issued-by-field"
         />
@@ -907,8 +909,10 @@ export default function DocumentStudio() {
           TEMPLATES.forEach(({ id }) => {
             const stored = parsed.drafts?.[id];
             if (stored) {
+              const storedFields = { ...(stored.fields ?? {}) };
+              if (storedFields.issuedBy === LEGACY_ISSUED_BY) storedFields.issuedBy = DEFAULT_ISSUED_BY;
               nextDrafts[id] = {
-                fields: stored.fields ?? {},
+                fields: storedFields,
                 removedFields: Array.isArray(stored.removedFields) ? stored.removedFields : [],
                 assets: stored.assets ?? {},
                 settings: {
