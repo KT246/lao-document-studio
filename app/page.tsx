@@ -1240,21 +1240,32 @@ export default function DocumentStudio() {
     document.body.classList.add("exporting-document");
     try {
       await waitForDocumentAssets(editorRef.current);
-      const html2pdfModule = await import("html2pdf.js");
-      const html2pdf = html2pdfModule.default;
-      const pdfOptions = {
-        margin: 0,
-        filename: selectedTemplate.fileName,
-        image: { type: "jpeg" as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
-        pagebreak: { mode: ["css", "legacy"], before: ".paper + .paper" }
-      };
-      await html2pdf()
-        // html2pdf.js 0.14 supports pagebreak at runtime, but its bundled type omits that key.
-        .set(pdfOptions as never)
-        .from(editorRef.current)
-        .save();
+      const papers = Array.from(editorRef.current.querySelectorAll<HTMLElement>(".paper"));
+      if (papers.length === 0) throw new Error("No document pages found");
+
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf")
+      ]);
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
+
+      for (let index = 0; index < papers.length; index += 1) {
+        const paper = papers[index];
+        const canvas = await html2canvas(paper, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+          width: paper.offsetWidth,
+          height: paper.offsetHeight,
+          windowWidth: paper.offsetWidth,
+          windowHeight: paper.offsetHeight
+        });
+        if (index > 0) pdf.addPage("a4", "portrait");
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, 210, 297, undefined, "FAST");
+      }
+
+      pdf.save(selectedTemplate.fileName);
       showToast("ດາວໂຫຼດ PDF ສຳເລັດແລ້ວ");
     } catch {
       showToast("ບໍ່ສາມາດສ້າງ PDF, ກຳລັງເປີດໜ້າພິມ");
