@@ -487,6 +487,7 @@ export default function DocumentStudio() {
   const [catalogRevision, setCatalogRevision] = useState(0);
   const [toast, setToast] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [downloadConfirmationOpen, setDownloadConfirmationOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
   const [pageFilter, setPageFilter] = useState<PageFilter>("all");
@@ -499,6 +500,7 @@ export default function DocumentStudio() {
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
   const statusRef = useRef<HTMLSpanElement>(null);
+  const confirmDownloadButtonRef = useRef<HTMLButtonElement>(null);
 
   const selectedTemplate = useMemo(
     () => TEMPLATES.find((template) => template.id === selectedId) ?? TEMPLATES[0],
@@ -649,6 +651,22 @@ export default function DocumentStudio() {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
   }, []);
 
+  useEffect(() => {
+    if (!downloadConfirmationOpen) return;
+    const previouslyFocused = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDownloadConfirmationOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    confirmDownloadButtonRef.current?.focus();
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      previouslyFocused?.focus();
+    };
+  }, [downloadConfirmationOpen]);
+
   const selectTemplate = (nextId: TemplateId) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     writeStorage(nextId);
@@ -737,6 +755,7 @@ export default function DocumentStudio() {
 
   const exportPdf = async () => {
     if (!editorRef.current || exporting) return;
+    setDownloadConfirmationOpen(false);
     setExporting(true);
     document.body.classList.add("exporting-document");
     try {
@@ -825,7 +844,15 @@ export default function DocumentStudio() {
         <div className="toolbar-divider" />
         <div className="toolbar-group toolbar-actions">
           <button onClick={() => writeStorage(selectedId, true)}>▣ ບັນທຶກ</button>
-          <button className="primary" disabled={exporting} onClick={exportPdf}>{exporting ? "⋯ ກຳລັງສ້າງ" : "↓ ດາວໂຫຼດ PDF"}</button>
+          <button
+            className="primary"
+            disabled={exporting}
+            aria-haspopup="dialog"
+            aria-expanded={downloadConfirmationOpen}
+            onClick={() => setDownloadConfirmationOpen(true)}
+          >
+            {exporting ? "⋯ ກຳລັງສ້າງ" : "↓ ດາວໂຫຼດ PDF"}
+          </button>
           <button onClick={printDocument}>▤ ພິມ</button>
           <button className="danger" onClick={resetCurrentTemplate}>↺ ຄືນຄ່າ</button>
         </div>
@@ -947,6 +974,43 @@ export default function DocumentStudio() {
           </div>
         </section>
       </div>
+
+      {downloadConfirmationOpen ? (
+        <div
+          className="download-confirmation-layer"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setDownloadConfirmationOpen(false);
+          }}
+        >
+          <section
+            className="download-confirmation"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="download-confirmation-title"
+            aria-describedby="download-confirmation-description"
+          >
+            <div className="download-confirmation-icon" aria-hidden="true">PDF</div>
+            <div className="download-confirmation-copy">
+              <h2 id="download-confirmation-title">ຢືນຢັນການດາວໂຫຼດ</h2>
+              <p id="download-confirmation-description">
+                ຕ້ອງການດາວໂຫຼດ “{selectedTemplate.laoName}” ເປັນໄຟລ໌ PDF ຫຼື ບໍ່?
+              </p>
+              <small>{selectedTemplate.fileName}</small>
+            </div>
+            <div className="download-confirmation-actions">
+              <button type="button" onClick={() => setDownloadConfirmationOpen(false)}>ຍົກເລີກ</button>
+              <button
+                ref={confirmDownloadButtonRef}
+                type="button"
+                className="confirm-download"
+                onClick={exportPdf}
+              >
+                ↓ ດາວໂຫຼດ PDF
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       <input ref={fileInputRef} className="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={uploadAsset} />
       <div className={`toast ${toast ? "show" : ""}`} role="status" aria-live="polite">✓ {toast}</div>

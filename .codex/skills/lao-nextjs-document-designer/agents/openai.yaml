@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lao Next.js Document Designer"
+  short_description: "Build frontend-only Lao document editors"
+  default_prompt: "Use $lao-nextjs-document-designer to build or improve a frontend-only Lao document editor with template selection, bilingual fonts, local persistence, and client-side export."

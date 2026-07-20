@@ -1062,6 +1062,103 @@ input:focus-visible,
   transform: translateY(0);
 }
 
+.download-confirmation-layer {
+  position: fixed;
+  z-index: 500;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(12, 27, 40, 0.52);
+  backdrop-filter: blur(3px);
+}
+
+.download-confirmation {
+  display: grid;
+  width: min(430px, 100%);
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid rgba(23, 61, 93, 0.16);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(9, 26, 40, 0.28);
+}
+
+.download-confirmation-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 12px;
+  color: #fff;
+  background: var(--navy);
+  font-family: Inter, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.download-confirmation-copy h2 {
+  margin: 1px 0 7px;
+  color: var(--navy-dark);
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.download-confirmation-copy p {
+  margin: 0;
+  color: #445465;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.download-confirmation-copy small {
+  display: block;
+  overflow: hidden;
+  margin-top: 8px;
+  color: var(--muted);
+  font-family: Inter, Arial, sans-serif;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.download-confirmation-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 3px;
+}
+
+.download-confirmation-actions button {
+  min-height: 40px;
+  padding: 8px 15px;
+  border: 1px solid #c8d0d9;
+  border-radius: 8px;
+  color: #344454;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.download-confirmation-actions button:hover {
+  border-color: #9eacba;
+  background: #f6f8fa;
+}
+
+.download-confirmation-actions .confirm-download {
+  border-color: var(--navy);
+  color: #fff;
+  background: var(--navy);
+}
+
+.download-confirmation-actions .confirm-download:hover {
+  border-color: var(--navy-dark);
+  background: var(--navy-dark);
+}
+
 .visually-hidden {
   position: absolute !important;
   width: 1px !important;
@@ -1187,6 +1284,25 @@ input:focus-visible,
   }
 }
 
+@media (max-width: 460px) {
+  .download-confirmation {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .download-confirmation-icon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .download-confirmation-actions {
+    grid-column: auto;
+    display: grid;
+    grid-template-columns: 1fr 1.35fr;
+  }
+}
+
 @page {
   size: A4 portrait;
   margin: 0;
@@ -1206,6 +1322,7 @@ input:focus-visible,
   .studio-toolbar,
   .template-catalog,
   .workspace-heading,
+  .download-confirmation-layer,
   .toast,
   .visually-hidden {
     display: none !important;
