@@ -152,6 +152,7 @@ function EditableText({
   const Shell = isBlock ? "div" : "span";
   const editableValueRef = useRef<HTMLSpanElement>(null);
   const initialValueRef = useRef(value);
+  const renderedValue = ctx.editing ? initialValueRef.current : value;
 
   useLayoutEffect(() => {
     const element = editableValueRef.current;
@@ -159,7 +160,8 @@ function EditableText({
     const activeElement = document.activeElement;
     if (activeElement === element || (activeElement && element.contains(activeElement))) return;
     if (element.innerHTML !== value) element.innerHTML = value;
-  }, [removed, value]);
+    initialValueRef.current = value;
+  }, [ctx.editing, removed, value]);
 
   if (removed && !ctx.editing) return null;
 
@@ -205,7 +207,7 @@ function EditableText({
                 ctx.onFieldChange(field, element.innerHTML, element.textContent ?? "");
               });
             }}
-            dangerouslySetInnerHTML={{ __html: initialValueRef.current }}
+            dangerouslySetInnerHTML={{ __html: renderedValue }}
           />
           {ctx.editing ? (
             <button
