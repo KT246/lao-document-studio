@@ -354,27 +354,6 @@ input:focus-visible,
   opacity: 0.45;
 }
 
-.catalog-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 11px;
-  padding: 0 2px;
-}
-
-.catalog-heading span {
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.catalog-heading b {
-  padding: 2px 7px;
-  border-radius: 999px;
-  color: #526476;
-  background: #e8edf2;
-  font-size: 9px;
-}
-
 .template-list {
   display: grid;
   gap: 8px;
@@ -1134,7 +1113,6 @@ input:focus-visible,
     border-bottom: 1px solid #d7dde4;
   }
 
-  .catalog-heading,
   .catalog-tip {
     display: none;
   }

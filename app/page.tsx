@@ -832,7 +832,7 @@ export default function DocumentStudio() {
       </section>
 
       <div className="studio-body">
-        <aside className="template-catalog" aria-label="ລາຍການແບບຟອມ">
+        <aside className="template-catalog" aria-label="ແບບຟອມເອກະສານ">
           <section className="catalog-filters" aria-label="ຕົວກອງແບບຟອມ">
             <label className="catalog-search">
               <span>ຄົ້ນຫາ</span>
@@ -873,10 +873,6 @@ export default function DocumentStudio() {
             </div>
           </section>
 
-          <div className="catalog-heading">
-            <span>ລາຍການແບບຟອມ</span>
-            <b>{filteredTemplates.length}/{TEMPLATES.length} ແບບ</b>
-          </div>
           <div className="template-list">
             {filteredTemplates.map((template) => (
               <button
