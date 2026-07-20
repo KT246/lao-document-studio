@@ -315,30 +315,40 @@ function PaginatedDocument({
 }
 
 function OfficialLaoHeader({ ctx }: { ctx: EditorContext }) {
+  const organizationLogo = ctx.draft.assets.logo || "/logo.png";
+
   return (
     <header className="official-lao-header keep-together">
       <div className="official-header-top">
         <div className="official-issuer">
-          <EditableText
-            ctx={ctx}
-            field="officialIssuerName"
-            html="ບໍລິສັດ [ຊື່ບໍລິສັດ]"
-            as="div"
-            className="official-issuer-name"
-          />
-          <EditableText
-            ctx={ctx}
-            field="officialIssuerOffice"
-            html="[ພະແນກ / ຫ້ອງການ]"
-            as="div"
-          />
-          <EditableText
-            ctx={ctx}
-            field="issuedBy"
-            html="<strong>ອອກໃຫ້ໂດຍ:</strong> TJ Group<br><strong>Issued by:</strong> TJ Group"
-            as="div"
-            className="official-issued-by"
-          />
+          <div
+            className="official-organization-logo"
+            style={{ width: `${Math.min(ctx.draft.settings.logoWidth, 92)}px` }}
+          >
+            <img src={organizationLogo} alt="Logo ອົງກອນ" />
+          </div>
+          <div className="official-issuer-copy">
+            <EditableText
+              ctx={ctx}
+              field="officialIssuerName"
+              html="ບໍລິສັດ [ຊື່ບໍລິສັດ]"
+              as="div"
+              className="official-issuer-name"
+            />
+            <EditableText
+              ctx={ctx}
+              field="officialIssuerOffice"
+              html="[ພະແນກ / ຫ້ອງການ]"
+              as="div"
+            />
+            <EditableText
+              ctx={ctx}
+              field="issuedBy"
+              html="<strong>ອອກໃຫ້ໂດຍ:</strong> TJ Group<br><strong>Issued by:</strong> TJ Group"
+              as="div"
+              className="official-issued-by"
+            />
+          </div>
         </div>
         <img
           className="official-national-emblem"
@@ -378,12 +388,12 @@ function OfficialLaoHeader({ ctx }: { ctx: EditorContext }) {
 }
 
 function CompanyHeader({ ctx, compact = false }: { ctx: EditorContext; compact?: boolean }) {
-  const logo = ctx.draft.assets.logo;
+  const logo = ctx.draft.assets.logo || "/logo.png";
   return (
     <section className={`company-header keep-together ${compact ? "is-compact" : ""}`}>
       <div className="company-side">
         <div className="document-logo" style={{ width: `${ctx.draft.settings.logoWidth}px` }}>
-          {logo ? <img src={logo} alt="Logo ບໍລິສັດ" /> : <span>Logo</span>}
+          <img src={logo} alt="Logo ບໍລິສັດ" />
         </div>
         <div className="company-copy">
           <EditableText ctx={ctx} field="companyName" html="[ຊື່ບໍລິສັດ]" as="div" className="company-name" />

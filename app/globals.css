@@ -577,17 +577,36 @@ input:focus-visible,
 
 .official-header-top {
   position: relative;
-  min-height: 31mm;
+  min-height: 36mm;
 }
 
 .official-issuer {
   position: absolute;
-  top: 5mm;
+  top: 0;
   left: 0;
   width: 57mm;
   font-size: 10.5px;
   line-height: 1.45;
   text-align: left;
+}
+
+.official-organization-logo {
+  display: grid;
+  height: 15mm;
+  margin-bottom: 2px;
+  place-items: center start;
+}
+
+.official-organization-logo img {
+  display: block;
+  width: 100%;
+  max-height: 15mm;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.official-issuer-copy {
+  max-width: 57mm;
 }
 
 .official-issuer-name {
@@ -613,7 +632,7 @@ input:focus-visible,
 }
 
 .official-national-copy {
-  margin-top: -6mm;
+  margin-top: -7mm;
   text-align: center;
 }
 
